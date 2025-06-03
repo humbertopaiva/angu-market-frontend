@@ -1,8 +1,11 @@
+// src/features/dashboard/view/dashboard-view.tsx
 import { useEffect } from 'react'
 import { Loader2 } from 'lucide-react'
 
 import { useDashboardViewModel } from '../viewmodel/dashboard-viewmodel'
-import { UserProfileCard } from '../compoents/user-profile-card'
+
+import { AdminAccessCard } from '../components/admin-access-card'
+import { UserProfileCard } from '../components/user-profile-card'
 import { useAuthStore } from '@/features/auth/stores/auth-store'
 
 export function DashboardView() {
@@ -49,12 +52,26 @@ export function DashboardView() {
           <p className="text-gray-600">Bem-vindo ao seu painel de controle</p>
         </div>
 
-        <UserProfileCard
-          user={user}
-          onLogout={handleLogout}
-          getUserInitials={dashboardViewModel.getUserInitials}
-          formatDate={dashboardViewModel.formatDate}
-        />
+        <div className="grid gap-6 lg:grid-cols-3">
+          {/* User Profile Card - Spans 2 columns on large screens */}
+          <div className="lg:col-span-2">
+            <UserProfileCard
+              user={user}
+              onLogout={handleLogout}
+              getUserInitials={dashboardViewModel.getUserInitials}
+              formatDate={dashboardViewModel.formatDate}
+            />
+          </div>
+
+          {/* Admin Access Card - 1 column on large screens */}
+          <div className="space-y-6">
+            <AdminAccessCard />
+
+            {/* Você pode adicionar mais cards aqui no futuro */}
+            {/* <NotificationsCard />
+            <RecentActivityCard /> */}
+          </div>
+        </div>
       </div>
     </div>
   )
