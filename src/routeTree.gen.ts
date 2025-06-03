@@ -15,15 +15,15 @@ import { Route as DashboardImport } from './routes/dashboard'
 import { Route as AuthImport } from './routes/auth'
 import { Route as AdminImport } from './routes/admin'
 import { Route as IndexImport } from './routes/index'
+import { Route as AdminIndexImport } from './routes/admin/index'
 import { Route as AuthVerifyEmailImport } from './routes/auth/verify-email'
 import { Route as AuthSignupImport } from './routes/auth/signup'
 import { Route as AuthLoginImport } from './routes/auth/login'
 import { Route as AuthForgotPasswordImport } from './routes/auth/forgot-password'
-import { Route as AuthAdminIndexImport } from './routes/auth/admin/index'
+import { Route as AdminUsersImport } from './routes/admin/users'
+import { Route as AdminPlacesImport } from './routes/admin/places'
 import { Route as AuthVerifyEmailTokenImport } from './routes/auth/verify-email/$token'
-import { Route as AuthResetPassowordTokenImport } from './routes/auth/reset-passoword/$token'
-import { Route as AuthAdminUsersImport } from './routes/auth/admin/users'
-import { Route as AuthAdminPlacesImport } from './routes/auth/admin/places'
+import { Route as AuthResetPasswordTokenImport } from './routes/auth/reset-password/$token'
 
 // Create/Update Routes
 
@@ -51,6 +51,12 @@ const IndexRoute = IndexImport.update({
   getParentRoute: () => rootRoute,
 } as any)
 
+const AdminIndexRoute = AdminIndexImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AdminRoute,
+} as any)
+
 const AuthVerifyEmailRoute = AuthVerifyEmailImport.update({
   id: '/verify-email',
   path: '/verify-email',
@@ -75,10 +81,16 @@ const AuthForgotPasswordRoute = AuthForgotPasswordImport.update({
   getParentRoute: () => AuthRoute,
 } as any)
 
-const AuthAdminIndexRoute = AuthAdminIndexImport.update({
-  id: '/admin/',
-  path: '/admin/',
-  getParentRoute: () => AuthRoute,
+const AdminUsersRoute = AdminUsersImport.update({
+  id: '/users',
+  path: '/users',
+  getParentRoute: () => AdminRoute,
+} as any)
+
+const AdminPlacesRoute = AdminPlacesImport.update({
+  id: '/places',
+  path: '/places',
+  getParentRoute: () => AdminRoute,
 } as any)
 
 const AuthVerifyEmailTokenRoute = AuthVerifyEmailTokenImport.update({
@@ -87,21 +99,9 @@ const AuthVerifyEmailTokenRoute = AuthVerifyEmailTokenImport.update({
   getParentRoute: () => AuthVerifyEmailRoute,
 } as any)
 
-const AuthResetPassowordTokenRoute = AuthResetPassowordTokenImport.update({
-  id: '/reset-passoword/$token',
-  path: '/reset-passoword/$token',
-  getParentRoute: () => AuthRoute,
-} as any)
-
-const AuthAdminUsersRoute = AuthAdminUsersImport.update({
-  id: '/admin/users',
-  path: '/admin/users',
-  getParentRoute: () => AuthRoute,
-} as any)
-
-const AuthAdminPlacesRoute = AuthAdminPlacesImport.update({
-  id: '/admin/places',
-  path: '/admin/places',
+const AuthResetPasswordTokenRoute = AuthResetPasswordTokenImport.update({
+  id: '/reset-password/$token',
+  path: '/reset-password/$token',
   getParentRoute: () => AuthRoute,
 } as any)
 
@@ -137,6 +137,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardImport
       parentRoute: typeof rootRoute
     }
+    '/admin/places': {
+      id: '/admin/places'
+      path: '/places'
+      fullPath: '/admin/places'
+      preLoaderRoute: typeof AdminPlacesImport
+      parentRoute: typeof AdminImport
+    }
+    '/admin/users': {
+      id: '/admin/users'
+      path: '/users'
+      fullPath: '/admin/users'
+      preLoaderRoute: typeof AdminUsersImport
+      parentRoute: typeof AdminImport
+    }
     '/auth/forgot-password': {
       id: '/auth/forgot-password'
       path: '/forgot-password'
@@ -165,25 +179,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthVerifyEmailImport
       parentRoute: typeof AuthImport
     }
-    '/auth/admin/places': {
-      id: '/auth/admin/places'
-      path: '/admin/places'
-      fullPath: '/auth/admin/places'
-      preLoaderRoute: typeof AuthAdminPlacesImport
-      parentRoute: typeof AuthImport
+    '/admin/': {
+      id: '/admin/'
+      path: '/'
+      fullPath: '/admin/'
+      preLoaderRoute: typeof AdminIndexImport
+      parentRoute: typeof AdminImport
     }
-    '/auth/admin/users': {
-      id: '/auth/admin/users'
-      path: '/admin/users'
-      fullPath: '/auth/admin/users'
-      preLoaderRoute: typeof AuthAdminUsersImport
-      parentRoute: typeof AuthImport
-    }
-    '/auth/reset-passoword/$token': {
-      id: '/auth/reset-passoword/$token'
-      path: '/reset-passoword/$token'
-      fullPath: '/auth/reset-passoword/$token'
-      preLoaderRoute: typeof AuthResetPassowordTokenImport
+    '/auth/reset-password/$token': {
+      id: '/auth/reset-password/$token'
+      path: '/reset-password/$token'
+      fullPath: '/auth/reset-password/$token'
+      preLoaderRoute: typeof AuthResetPasswordTokenImport
       parentRoute: typeof AuthImport
     }
     '/auth/verify-email/$token': {
@@ -193,17 +200,24 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthVerifyEmailTokenImport
       parentRoute: typeof AuthVerifyEmailImport
     }
-    '/auth/admin/': {
-      id: '/auth/admin/'
-      path: '/admin'
-      fullPath: '/auth/admin'
-      preLoaderRoute: typeof AuthAdminIndexImport
-      parentRoute: typeof AuthImport
-    }
   }
 }
 
 // Create and export the route tree
+
+interface AdminRouteChildren {
+  AdminPlacesRoute: typeof AdminPlacesRoute
+  AdminUsersRoute: typeof AdminUsersRoute
+  AdminIndexRoute: typeof AdminIndexRoute
+}
+
+const AdminRouteChildren: AdminRouteChildren = {
+  AdminPlacesRoute: AdminPlacesRoute,
+  AdminUsersRoute: AdminUsersRoute,
+  AdminIndexRoute: AdminIndexRoute,
+}
+
+const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
 
 interface AuthVerifyEmailRouteChildren {
   AuthVerifyEmailTokenRoute: typeof AuthVerifyEmailTokenRoute
@@ -222,10 +236,7 @@ interface AuthRouteChildren {
   AuthLoginRoute: typeof AuthLoginRoute
   AuthSignupRoute: typeof AuthSignupRoute
   AuthVerifyEmailRoute: typeof AuthVerifyEmailRouteWithChildren
-  AuthAdminPlacesRoute: typeof AuthAdminPlacesRoute
-  AuthAdminUsersRoute: typeof AuthAdminUsersRoute
-  AuthResetPassowordTokenRoute: typeof AuthResetPassowordTokenRoute
-  AuthAdminIndexRoute: typeof AuthAdminIndexRoute
+  AuthResetPasswordTokenRoute: typeof AuthResetPasswordTokenRoute
 }
 
 const AuthRouteChildren: AuthRouteChildren = {
@@ -233,61 +244,57 @@ const AuthRouteChildren: AuthRouteChildren = {
   AuthLoginRoute: AuthLoginRoute,
   AuthSignupRoute: AuthSignupRoute,
   AuthVerifyEmailRoute: AuthVerifyEmailRouteWithChildren,
-  AuthAdminPlacesRoute: AuthAdminPlacesRoute,
-  AuthAdminUsersRoute: AuthAdminUsersRoute,
-  AuthResetPassowordTokenRoute: AuthResetPassowordTokenRoute,
-  AuthAdminIndexRoute: AuthAdminIndexRoute,
+  AuthResetPasswordTokenRoute: AuthResetPasswordTokenRoute,
 }
 
 const AuthRouteWithChildren = AuthRoute._addFileChildren(AuthRouteChildren)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/admin': typeof AdminRoute
+  '/admin': typeof AdminRouteWithChildren
   '/auth': typeof AuthRouteWithChildren
   '/dashboard': typeof DashboardRoute
+  '/admin/places': typeof AdminPlacesRoute
+  '/admin/users': typeof AdminUsersRoute
   '/auth/forgot-password': typeof AuthForgotPasswordRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/signup': typeof AuthSignupRoute
   '/auth/verify-email': typeof AuthVerifyEmailRouteWithChildren
-  '/auth/admin/places': typeof AuthAdminPlacesRoute
-  '/auth/admin/users': typeof AuthAdminUsersRoute
-  '/auth/reset-passoword/$token': typeof AuthResetPassowordTokenRoute
+  '/admin/': typeof AdminIndexRoute
+  '/auth/reset-password/$token': typeof AuthResetPasswordTokenRoute
   '/auth/verify-email/$token': typeof AuthVerifyEmailTokenRoute
-  '/auth/admin': typeof AuthAdminIndexRoute
 }
 
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/admin': typeof AdminRoute
   '/auth': typeof AuthRouteWithChildren
   '/dashboard': typeof DashboardRoute
+  '/admin/places': typeof AdminPlacesRoute
+  '/admin/users': typeof AdminUsersRoute
   '/auth/forgot-password': typeof AuthForgotPasswordRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/signup': typeof AuthSignupRoute
   '/auth/verify-email': typeof AuthVerifyEmailRouteWithChildren
-  '/auth/admin/places': typeof AuthAdminPlacesRoute
-  '/auth/admin/users': typeof AuthAdminUsersRoute
-  '/auth/reset-passoword/$token': typeof AuthResetPassowordTokenRoute
+  '/admin': typeof AdminIndexRoute
+  '/auth/reset-password/$token': typeof AuthResetPasswordTokenRoute
   '/auth/verify-email/$token': typeof AuthVerifyEmailTokenRoute
-  '/auth/admin': typeof AuthAdminIndexRoute
 }
 
 export interface FileRoutesById {
   __root__: typeof rootRoute
   '/': typeof IndexRoute
-  '/admin': typeof AdminRoute
+  '/admin': typeof AdminRouteWithChildren
   '/auth': typeof AuthRouteWithChildren
   '/dashboard': typeof DashboardRoute
+  '/admin/places': typeof AdminPlacesRoute
+  '/admin/users': typeof AdminUsersRoute
   '/auth/forgot-password': typeof AuthForgotPasswordRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/signup': typeof AuthSignupRoute
   '/auth/verify-email': typeof AuthVerifyEmailRouteWithChildren
-  '/auth/admin/places': typeof AuthAdminPlacesRoute
-  '/auth/admin/users': typeof AuthAdminUsersRoute
-  '/auth/reset-passoword/$token': typeof AuthResetPassowordTokenRoute
+  '/admin/': typeof AdminIndexRoute
+  '/auth/reset-password/$token': typeof AuthResetPasswordTokenRoute
   '/auth/verify-email/$token': typeof AuthVerifyEmailTokenRoute
-  '/auth/admin/': typeof AuthAdminIndexRoute
 }
 
 export interface FileRouteTypes {
@@ -297,58 +304,57 @@ export interface FileRouteTypes {
     | '/admin'
     | '/auth'
     | '/dashboard'
+    | '/admin/places'
+    | '/admin/users'
     | '/auth/forgot-password'
     | '/auth/login'
     | '/auth/signup'
     | '/auth/verify-email'
-    | '/auth/admin/places'
-    | '/auth/admin/users'
-    | '/auth/reset-passoword/$token'
+    | '/admin/'
+    | '/auth/reset-password/$token'
     | '/auth/verify-email/$token'
-    | '/auth/admin'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/admin'
     | '/auth'
     | '/dashboard'
+    | '/admin/places'
+    | '/admin/users'
     | '/auth/forgot-password'
     | '/auth/login'
     | '/auth/signup'
     | '/auth/verify-email'
-    | '/auth/admin/places'
-    | '/auth/admin/users'
-    | '/auth/reset-passoword/$token'
+    | '/admin'
+    | '/auth/reset-password/$token'
     | '/auth/verify-email/$token'
-    | '/auth/admin'
   id:
     | '__root__'
     | '/'
     | '/admin'
     | '/auth'
     | '/dashboard'
+    | '/admin/places'
+    | '/admin/users'
     | '/auth/forgot-password'
     | '/auth/login'
     | '/auth/signup'
     | '/auth/verify-email'
-    | '/auth/admin/places'
-    | '/auth/admin/users'
-    | '/auth/reset-passoword/$token'
+    | '/admin/'
+    | '/auth/reset-password/$token'
     | '/auth/verify-email/$token'
-    | '/auth/admin/'
   fileRoutesById: FileRoutesById
 }
 
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  AdminRoute: typeof AdminRoute
+  AdminRoute: typeof AdminRouteWithChildren
   AuthRoute: typeof AuthRouteWithChildren
   DashboardRoute: typeof DashboardRoute
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  AdminRoute: AdminRoute,
+  AdminRoute: AdminRouteWithChildren,
   AuthRoute: AuthRouteWithChildren,
   DashboardRoute: DashboardRoute,
 }
@@ -373,7 +379,12 @@ export const routeTree = rootRoute
       "filePath": "index.tsx"
     },
     "/admin": {
-      "filePath": "admin.tsx"
+      "filePath": "admin.tsx",
+      "children": [
+        "/admin/places",
+        "/admin/users",
+        "/admin/"
+      ]
     },
     "/auth": {
       "filePath": "auth.tsx",
@@ -382,14 +393,19 @@ export const routeTree = rootRoute
         "/auth/login",
         "/auth/signup",
         "/auth/verify-email",
-        "/auth/admin/places",
-        "/auth/admin/users",
-        "/auth/reset-passoword/$token",
-        "/auth/admin/"
+        "/auth/reset-password/$token"
       ]
     },
     "/dashboard": {
       "filePath": "dashboard.tsx"
+    },
+    "/admin/places": {
+      "filePath": "admin/places.tsx",
+      "parent": "/admin"
+    },
+    "/admin/users": {
+      "filePath": "admin/users.tsx",
+      "parent": "/admin"
     },
     "/auth/forgot-password": {
       "filePath": "auth/forgot-password.tsx",
@@ -410,25 +426,17 @@ export const routeTree = rootRoute
         "/auth/verify-email/$token"
       ]
     },
-    "/auth/admin/places": {
-      "filePath": "auth/admin/places.tsx",
-      "parent": "/auth"
+    "/admin/": {
+      "filePath": "admin/index.tsx",
+      "parent": "/admin"
     },
-    "/auth/admin/users": {
-      "filePath": "auth/admin/users.tsx",
-      "parent": "/auth"
-    },
-    "/auth/reset-passoword/$token": {
-      "filePath": "auth/reset-passoword/$token.tsx",
+    "/auth/reset-password/$token": {
+      "filePath": "auth/reset-password/$token.tsx",
       "parent": "/auth"
     },
     "/auth/verify-email/$token": {
       "filePath": "auth/verify-email/$token.tsx",
       "parent": "/auth/verify-email"
-    },
-    "/auth/admin/": {
-      "filePath": "auth/admin/index.tsx",
-      "parent": "/auth"
     }
   }
 }

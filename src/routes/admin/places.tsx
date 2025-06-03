@@ -1,11 +1,11 @@
 import { Navigate, createFileRoute } from '@tanstack/react-router'
 import { tokenStorage } from '@/infra/storage/token-storage'
 import { useAuthStore } from '@/features/auth/stores/auth-store'
-import { UsersView } from '@/features/admin/view/users-view'
+import { PlacesView } from '@/features/admin/view/places-view'
 import { isSuperAdmin } from '@/utils/role-helpers'
 
-export const Route = createFileRoute('/auth/admin/users')({
-  component: AdminUsersPage,
+export const Route = createFileRoute('/admin/places')({
+  component: AdminPlacesPage,
   beforeLoad: ({ location }) => {
     // Verificar se tem token
     if (!tokenStorage.hasToken()) {
@@ -14,7 +14,7 @@ export const Route = createFileRoute('/auth/admin/users')({
   },
 })
 
-function AdminUsersPage() {
+function AdminPlacesPage() {
   const { user, isLoading } = useAuthStore()
 
   // Loading state
@@ -39,5 +39,5 @@ function AdminUsersPage() {
     return <Navigate to="/dashboard" />
   }
 
-  return <UsersView />
+  return <PlacesView />
 }

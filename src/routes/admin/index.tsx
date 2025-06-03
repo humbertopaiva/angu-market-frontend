@@ -4,7 +4,7 @@ import { useAuthStore } from '@/features/auth/stores/auth-store'
 import { AdminOverviewView } from '@/features/admin/view/admin-overview-view'
 import { isSuperAdmin } from '@/utils/role-helpers'
 
-export const Route = createFileRoute('/auth/admin/')({
+export const Route = createFileRoute('/admin/')({
   component: AdminIndexPage,
   beforeLoad: ({ location }) => {
     // Verificar se tem token
