@@ -1,100 +1,147 @@
 import React from 'react'
-import { Link } from '@tanstack/react-router'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
+import { Eye, EyeOff, Loader2 } from 'lucide-react'
+import type { LoginInput } from '@/types/graphql'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card'
 
-// Definindo o esquema de validação com Zod
 const loginSchema = z.object({
-  email: z.string().email('Digite um email válido'),
+  email: z.string().min(1, 'Email é obrigatório').email('Email inválido'),
   password: z.string().min(6, 'A senha deve ter pelo menos 6 caracteres'),
 })
 
 type LoginFormData = z.infer<typeof loginSchema>
 
 interface LoginFormProps {
-  onSubmit: (data: LoginFormData) => void
-  isLoading?: boolean
+  onSubmit: (data: LoginInput) => Promise<void>
+  isLoading: boolean
+  onForgotPassword: () => void
 }
 
-export const LoginForm: React.FC<LoginFormProps> = ({
+export function LoginForm({
   onSubmit,
-  isLoading = false,
-}) => {
+  isLoading,
+  onForgotPassword,
+}: LoginFormProps) {
+  const [showPassword, setShowPassword] = React.useState(false)
+
   const {
     register,
     handleSubmit,
-    formState: { errors },
+    formState: { errors, isValid },
   } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
+    mode: 'onChange',
   })
 
-  return (
-    <div className="w-full max-w-md mx-auto">
-      <div className="bg-card shadow-md rounded-lg p-6 sm:p-8">
-        <h2 className="text-2xl font-bold text-center mb-6">
-          Acesse sua conta
-        </h2>
+  const handleFormSubmit = async (data: LoginFormData) => {
+    await onSubmit(data)
+  }
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+  return (
+    <Card className="w-full shadow-xl">
+      <CardHeader className="space-y-1 text-center">
+        <CardTitle className="text-3xl font-bold text-gray-900">
+          Bem-vindo de volta
+        </CardTitle>
+        <CardDescription className="text-gray-600">
+          Entre com suas credenciais para acessar sua conta
+        </CardDescription>
+      </CardHeader>
+
+      <CardContent>
+        <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-4">
           <div className="space-y-2">
-            <label htmlFor="email" className="block text-sm font-medium">
+            <Label
+              htmlFor="email"
+              className="text-sm font-medium text-gray-700"
+            >
               Email
-            </label>
-            <input
+            </Label>
+            <Input
               id="email"
               type="email"
-              placeholder="Digite seu email"
-              className="w-full p-2 border rounded-md bg-background"
+              placeholder="seu@email.com"
+              className="h-12"
               {...register('email')}
+              disabled={isLoading}
             />
             {errors.email && (
-              <p className="text-destructive text-sm">{errors.email.message}</p>
+              <p className="text-sm text-red-600">{errors.email.message}</p>
             )}
           </div>
 
           <div className="space-y-2">
-            <label htmlFor="password" className="block text-sm font-medium">
+            <Label
+              htmlFor="password"
+              className="text-sm font-medium text-gray-700"
+            >
               Senha
-            </label>
-            <input
-              id="password"
-              type="password"
-              placeholder="Digite sua senha"
-              className="w-full p-2 border rounded-md bg-background"
-              {...register('password')}
-            />
+            </Label>
+            <div className="relative">
+              <Input
+                id="password"
+                type={showPassword ? 'text' : 'password'}
+                placeholder="Sua senha"
+                className="h-12 pr-10"
+                {...register('password')}
+                disabled={isLoading}
+              />
+              <button
+                type="button"
+                className="absolute inset-y-0 right-0 flex items-center pr-3"
+                onClick={() => setShowPassword(!showPassword)}
+                disabled={isLoading}
+              >
+                {showPassword ? (
+                  <EyeOff className="h-4 w-4 text-gray-400" />
+                ) : (
+                  <Eye className="h-4 w-4 text-gray-400" />
+                )}
+              </button>
+            </div>
             {errors.password && (
-              <p className="text-destructive text-sm">
-                {errors.password.message}
-              </p>
+              <p className="text-sm text-red-600">{errors.password.message}</p>
             )}
           </div>
 
-          <div className="flex justify-between items-center">
-            <Link
-              to="/forgot-password"
-              className="text-primary text-sm hover:underline"
+          <div className="flex items-center justify-end">
+            <button
+              type="button"
+              onClick={onForgotPassword}
+              className="text-sm text-blue-600 hover:text-blue-500 transition-colors"
+              disabled={isLoading}
             >
-              Esqueci minha senha
-            </Link>
-
-            <Button type="submit" disabled={isLoading}>
-              {isLoading ? 'Entrando...' : 'Entrar'}
-            </Button>
+              Esqueceu sua senha?
+            </button>
           </div>
-        </form>
 
-        <div className="mt-6 text-center">
-          <p className="text-sm text-muted-foreground">
-            Não tem uma conta?{' '}
-            <Link to="/register" className="text-primary hover:underline">
-              Registre-se
-            </Link>
-          </p>
-        </div>
-      </div>
-    </div>
+          <Button
+            type="submit"
+            className="w-full h-12 text-base font-medium"
+            disabled={isLoading || !isValid}
+          >
+            {isLoading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Entrando...
+              </>
+            ) : (
+              'Entrar'
+            )}
+          </Button>
+        </form>
+      </CardContent>
+    </Card>
   )
 }
