@@ -2,16 +2,24 @@ import {
   LOGIN_MUTATION,
   ME_QUERY,
   REQUEST_PASSWORD_RESET_MUTATION,
+  RESEND_VERIFICATION_EMAIL_MUTATION,
   RESET_PASSWORD_MUTATION,
+  SIGN_UP_MUTATION,
+  VERIFY_EMAIL_MUTATION,
 } from './auth-queries'
 import type {
   AuthResponse,
   LoginInput,
   RequestPasswordResetInput,
   RequestPasswordResetResponse,
+  ResendVerificationInput,
   ResetPasswordInput,
   ResetPasswordResponse,
+  SignUpInput,
+  SignUpResponse,
   User,
+  VerifyEmailInput,
+  VerifyEmailResponse,
 } from '@/types/graphql'
 import { apolloClient } from '@/infra/graphql/apollo-client'
 import { tokenStorage } from '@/infra/storage/token-storage'
@@ -32,6 +40,50 @@ export class AuthService {
       return authResponse
     } catch (error) {
       console.error('Login error:', error)
+      throw error
+    }
+  }
+
+  async signUp(input: SignUpInput): Promise<SignUpResponse> {
+    try {
+      const { data } = await apolloClient.mutate({
+        mutation: SIGN_UP_MUTATION,
+        variables: { signUpInput: input },
+      })
+
+      return data.signUp as SignUpResponse
+    } catch (error) {
+      console.error('Sign up error:', error)
+      throw error
+    }
+  }
+
+  async verifyEmail(input: VerifyEmailInput): Promise<VerifyEmailResponse> {
+    try {
+      const { data } = await apolloClient.mutate({
+        mutation: VERIFY_EMAIL_MUTATION,
+        variables: { verifyEmailInput: input },
+      })
+
+      return data.verifyEmail as VerifyEmailResponse
+    } catch (error) {
+      console.error('Verify email error:', error)
+      throw error
+    }
+  }
+
+  async resendVerificationEmail(
+    input: ResendVerificationInput,
+  ): Promise<VerifyEmailResponse> {
+    try {
+      const { data } = await apolloClient.mutate({
+        mutation: RESEND_VERIFICATION_EMAIL_MUTATION,
+        variables: { resendVerificationInput: input },
+      })
+
+      return data.resendVerificationEmail as VerifyEmailResponse
+    } catch (error) {
+      console.error('Resend verification email error:', error)
       throw error
     }
   }

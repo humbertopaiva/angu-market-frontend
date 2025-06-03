@@ -5,7 +5,10 @@ import { useAuthStore } from '../stores/auth-store'
 import type {
   LoginInput,
   RequestPasswordResetInput,
+  ResendVerificationInput,
   ResetPasswordInput,
+  SignUpInput,
+  VerifyEmailInput,
 } from '@/types/graphql'
 
 export class AuthViewModel {
@@ -51,6 +54,94 @@ export class AuthViewModel {
       }
 
       toast.error('Erro no login', {
+        description: errorMessage,
+      })
+    } finally {
+      this.setLoading(false)
+    }
+  }
+
+  async signUp(input: SignUpInput): Promise<void> {
+    try {
+      this.setLoading(true)
+
+      const response = await this.authService.signUp(input)
+
+      toast.success('Conta criada com sucesso!', {
+        description: response.message,
+      })
+
+      // Redirecionar para página de verificação de email
+      this.navigate({
+        to: '/auth/verify-email',
+        search: { email: input.email },
+      })
+    } catch (error: any) {
+      console.error('Sign up error:', error)
+
+      let errorMessage = 'Erro interno do servidor'
+
+      if (error?.graphQLErrors?.length > 0) {
+        errorMessage = error.graphQLErrors[0].message
+      } else if (error?.networkError?.message) {
+        errorMessage = 'Erro de conexão com o servidor'
+      }
+
+      toast.error('Erro ao criar conta', {
+        description: errorMessage,
+      })
+    } finally {
+      this.setLoading(false)
+    }
+  }
+
+  async verifyEmail(input: VerifyEmailInput): Promise<void> {
+    try {
+      this.setLoading(true)
+
+      const response = await this.authService.verifyEmail(input)
+
+      toast.success('Email verificado com sucesso!', {
+        description: response.message,
+      })
+
+      this.navigate({ to: '/auth/login' })
+    } catch (error: any) {
+      console.error('Verify email error:', error)
+
+      let errorMessage = 'Erro interno do servidor'
+
+      if (error?.graphQLErrors?.length > 0) {
+        errorMessage = error.graphQLErrors[0].message
+      }
+
+      toast.error('Erro ao verificar email', {
+        description: errorMessage,
+      })
+    } finally {
+      this.setLoading(false)
+    }
+  }
+
+  async resendVerificationEmail(input: ResendVerificationInput): Promise<void> {
+    try {
+      this.setLoading(true)
+
+      const response = await this.authService.resendVerificationEmail(input)
+
+      toast.success('Email reenviado!', {
+        description: response.message,
+      })
+    } catch (error: any) {
+      console.error('Resend verification email error:', error)
+
+      let errorMessage = 'Erro interno do servidor'
+
+      if (error?.graphQLErrors?.length > 0) {
+        errorMessage = error.graphQLErrors[0].message
+      }
+
+      toast.error('Erro ao reenviar email', {
         description: errorMessage,
       })
     } finally {

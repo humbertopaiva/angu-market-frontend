@@ -56,6 +56,36 @@ export const LOGIN_MUTATION = gql`
   }
 `
 
+export const SIGN_UP_MUTATION = gql`
+  mutation SignUp($signUpInput: SignUpInput!) {
+    signUp(signUpInput: $signUpInput) {
+      success
+      message
+      userId
+    }
+  }
+`
+
+export const VERIFY_EMAIL_MUTATION = gql`
+  mutation VerifyEmail($verifyEmailInput: VerifyEmailInput!) {
+    verifyEmail(verifyEmailInput: $verifyEmailInput) {
+      success
+      message
+    }
+  }
+`
+
+export const RESEND_VERIFICATION_EMAIL_MUTATION = gql`
+  mutation ResendVerificationEmail(
+    $resendVerificationInput: ResendVerificationInput!
+  ) {
+    resendVerificationEmail(resendVerificationInput: $resendVerificationInput) {
+      success
+      message
+    }
+  }
+`
+
 export const REQUEST_PASSWORD_RESET_MUTATION = gql`
   mutation RequestPasswordReset(
     $requestPasswordResetInput: RequestPasswordResetInput!

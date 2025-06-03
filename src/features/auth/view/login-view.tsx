@@ -1,3 +1,4 @@
+import React from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import { LoginForm } from '../components/login-form'
 import { useAuthViewModel } from '../viewmodel/auth-viewmodel'
@@ -17,6 +18,10 @@ export function LoginView() {
     navigate({ to: '/auth/forgot-password' })
   }
 
+  const handleSignUp = () => {
+    navigate({ to: '/auth/signup' })
+  }
+
   return (
     <div className="flex flex-col items-center">
       <div className="text-center mb-8">
@@ -30,6 +35,7 @@ export function LoginView() {
         onSubmit={handleLogin}
         isLoading={isLoading}
         onForgotPassword={handleForgotPassword}
+        onSignUp={handleSignUp}
       />
     </div>
   )

@@ -117,6 +117,33 @@ export interface AuthResponse {
   user: User
 }
 
+export interface SignUpInput {
+  name: string
+  email: string
+  password: string
+  passwordConfirmation: string
+  securityToken: string
+}
+
+export interface SignUpResponse {
+  success: boolean
+  message: string
+  userId?: number
+}
+
+export interface VerifyEmailInput {
+  token: string
+}
+
+export interface VerifyEmailResponse {
+  success: boolean
+  message: string
+}
+
+export interface ResendVerificationInput {
+  email: string
+}
+
 export interface RequestPasswordResetInput {
   email: string
 }

@@ -26,12 +26,14 @@ interface LoginFormProps {
   onSubmit: (data: LoginInput) => Promise<void>
   isLoading: boolean
   onForgotPassword: () => void
+  onSignUp: () => void
 }
 
 export function LoginForm({
   onSubmit,
   isLoading,
   onForgotPassword,
+  onSignUp,
 }: LoginFormProps) {
   const [showPassword, setShowPassword] = React.useState(false)
 
@@ -139,6 +141,27 @@ export function LoginForm({
             ) : (
               'Entrar'
             )}
+          </Button>
+
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-background px-2 text-muted-foreground">
+                Não tem uma conta?
+              </span>
+            </div>
+          </div>
+
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full h-12 text-base"
+            onClick={onSignUp}
+            disabled={isLoading}
+          >
+            Criar nova conta
           </Button>
         </form>
       </CardContent>

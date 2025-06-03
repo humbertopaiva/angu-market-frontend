@@ -4,7 +4,7 @@ import { RouterProvider, createRouter } from '@tanstack/react-router'
 import { ApolloProvider } from '@apollo/client'
 
 import { routeTree } from './routeTree.gen'
-import './styles/globals.css'
+import './styles.css'
 import { apolloClient } from './core/lib/apollo'
 
 // Create a new router instance

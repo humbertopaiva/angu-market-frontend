@@ -1,7 +1,8 @@
-import React, { useEffect } from 'react'
+import { useEffect } from 'react'
 import { Loader2 } from 'lucide-react'
-import { UserProfileCard } from '../components/user-profile-card'
+
 import { useDashboardViewModel } from '../viewmodel/dashboard-viewmodel'
+import { UserProfileCard } from '../compoents/user-profile-card'
 import { useAuthStore } from '@/features/auth/stores/auth-store'
 
 export function DashboardView() {
