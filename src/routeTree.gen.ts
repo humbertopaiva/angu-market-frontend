@@ -22,6 +22,7 @@ import { Route as AuthLoginImport } from './routes/auth/login'
 import { Route as AuthForgotPasswordImport } from './routes/auth/forgot-password'
 import { Route as AdminUsersImport } from './routes/admin/users'
 import { Route as AdminPlacesImport } from './routes/admin/places'
+import { Route as AdminCompaniesImport } from './routes/admin/companies'
 import { Route as AuthVerifyEmailTokenImport } from './routes/auth/verify-email/$token'
 import { Route as AuthResetPasswordTokenImport } from './routes/auth/reset-password/$token'
 
@@ -93,6 +94,12 @@ const AdminPlacesRoute = AdminPlacesImport.update({
   getParentRoute: () => AdminRoute,
 } as any)
 
+const AdminCompaniesRoute = AdminCompaniesImport.update({
+  id: '/companies',
+  path: '/companies',
+  getParentRoute: () => AdminRoute,
+} as any)
+
 const AuthVerifyEmailTokenRoute = AuthVerifyEmailTokenImport.update({
   id: '/$token',
   path: '/$token',
@@ -136,6 +143,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/dashboard'
       preLoaderRoute: typeof DashboardImport
       parentRoute: typeof rootRoute
+    }
+    '/admin/companies': {
+      id: '/admin/companies'
+      path: '/companies'
+      fullPath: '/admin/companies'
+      preLoaderRoute: typeof AdminCompaniesImport
+      parentRoute: typeof AdminImport
     }
     '/admin/places': {
       id: '/admin/places'
@@ -206,12 +220,14 @@ declare module '@tanstack/react-router' {
 // Create and export the route tree
 
 interface AdminRouteChildren {
+  AdminCompaniesRoute: typeof AdminCompaniesRoute
   AdminPlacesRoute: typeof AdminPlacesRoute
   AdminUsersRoute: typeof AdminUsersRoute
   AdminIndexRoute: typeof AdminIndexRoute
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
+  AdminCompaniesRoute: AdminCompaniesRoute,
   AdminPlacesRoute: AdminPlacesRoute,
   AdminUsersRoute: AdminUsersRoute,
   AdminIndexRoute: AdminIndexRoute,
@@ -254,6 +270,7 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AdminRouteWithChildren
   '/auth': typeof AuthRouteWithChildren
   '/dashboard': typeof DashboardRoute
+  '/admin/companies': typeof AdminCompaniesRoute
   '/admin/places': typeof AdminPlacesRoute
   '/admin/users': typeof AdminUsersRoute
   '/auth/forgot-password': typeof AuthForgotPasswordRoute
@@ -269,6 +286,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRouteWithChildren
   '/dashboard': typeof DashboardRoute
+  '/admin/companies': typeof AdminCompaniesRoute
   '/admin/places': typeof AdminPlacesRoute
   '/admin/users': typeof AdminUsersRoute
   '/auth/forgot-password': typeof AuthForgotPasswordRoute
@@ -286,6 +304,7 @@ export interface FileRoutesById {
   '/admin': typeof AdminRouteWithChildren
   '/auth': typeof AuthRouteWithChildren
   '/dashboard': typeof DashboardRoute
+  '/admin/companies': typeof AdminCompaniesRoute
   '/admin/places': typeof AdminPlacesRoute
   '/admin/users': typeof AdminUsersRoute
   '/auth/forgot-password': typeof AuthForgotPasswordRoute
@@ -304,6 +323,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/auth'
     | '/dashboard'
+    | '/admin/companies'
     | '/admin/places'
     | '/admin/users'
     | '/auth/forgot-password'
@@ -318,6 +338,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/dashboard'
+    | '/admin/companies'
     | '/admin/places'
     | '/admin/users'
     | '/auth/forgot-password'
@@ -333,6 +354,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/auth'
     | '/dashboard'
+    | '/admin/companies'
     | '/admin/places'
     | '/admin/users'
     | '/auth/forgot-password'
@@ -381,6 +403,7 @@ export const routeTree = rootRoute
     "/admin": {
       "filePath": "admin.tsx",
       "children": [
+        "/admin/companies",
         "/admin/places",
         "/admin/users",
         "/admin/"
@@ -398,6 +421,10 @@ export const routeTree = rootRoute
     },
     "/dashboard": {
       "filePath": "dashboard.tsx"
+    },
+    "/admin/companies": {
+      "filePath": "admin/companies.tsx",
+      "parent": "/admin"
     },
     "/admin/places": {
       "filePath": "admin/places.tsx",

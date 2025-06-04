@@ -48,3 +48,39 @@ export function canManageCompanies(user: User | null): boolean {
     RoleType.PLACE_ADMIN,
   ])
 }
+
+// Nova função para verificar se pode criar empresas em um place específico
+export function canCreateCompanyInPlace(
+  user: User | null,
+  placeId?: number,
+): boolean {
+  if (!user) return false
+
+  // Super Admin pode criar em qualquer place
+  if (isSuperAdmin(user)) return true
+
+  // Place Admin só pode criar empresas em seu próprio place
+  if (isPlaceAdmin(user)) {
+    return user.placeId === placeId
+  }
+
+  return false
+}
+
+// Nova função para verificar se pode editar/deletar uma empresa específica
+export function canManageSpecificCompany(
+  user: User | null,
+  companyPlaceId: number,
+): boolean {
+  if (!user) return false
+
+  // Super Admin pode gerenciar qualquer empresa
+  if (isSuperAdmin(user)) return true
+
+  // Place Admin só pode gerenciar empresas de seu place
+  if (isPlaceAdmin(user)) {
+    return user.placeId === companyPlaceId
+  }
+
+  return false
+}

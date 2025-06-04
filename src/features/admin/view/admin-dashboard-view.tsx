@@ -1,6 +1,8 @@
+// src/features/admin/view/admin-dashboard-view.tsx - UPDATED
 import React from 'react'
 import { Outlet, useLocation, useNavigate } from '@tanstack/react-router'
 import {
+  Building,
   Building2,
   Home,
   LayoutDashboard,
@@ -22,22 +24,32 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { useAuthStore } from '@/features/auth/stores/auth-store'
 import { useDashboardViewModel } from '@/features/dashboard/viewmodel/dashboard-viewmodel'
+import { canManageCompanies, isSuperAdmin } from '@/utils/role-helpers'
 
 const navigationItems = [
   {
     title: 'Visão Geral',
     href: '/admin',
     icon: LayoutDashboard,
+    requiresSuperAdmin: false,
   },
   {
     title: 'Places',
     href: '/admin/places',
     icon: Building2,
+    requiresSuperAdmin: true,
+  },
+  {
+    title: 'Empresas',
+    href: '/admin/companies',
+    icon: Building,
+    requiresSuperAdmin: false,
   },
   {
     title: 'Usuários',
     href: '/admin/users',
     icon: Users,
+    requiresSuperAdmin: true,
   },
 ]
 
@@ -71,6 +83,20 @@ export function AdminDashboardView() {
     }
     return location.pathname.startsWith(href)
   }
+
+  // Filtrar itens de navegação baseado nas permissões do usuário
+  const visibleNavigationItems = navigationItems.filter((item) => {
+    if (item.requiresSuperAdmin && !isSuperAdmin(user)) {
+      return false
+    }
+
+    // Para empresas, verificar se pode gerenciar
+    if (item.href === '/admin/companies' && !canManageCompanies(user)) {
+      return false
+    }
+
+    return true
+  })
 
   if (!user) {
     return null
@@ -154,7 +180,7 @@ export function AdminDashboardView() {
         `}
         >
           <nav className="h-full px-4 py-6 space-y-2">
-            {navigationItems.map((item) => {
+            {visibleNavigationItems.map((item) => {
               const Icon = item.icon
               const isActive = isCurrentPath(item.href)
 
