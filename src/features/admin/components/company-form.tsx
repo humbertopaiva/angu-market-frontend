@@ -157,7 +157,7 @@ export function CompanyForm({
         isActive: data.isActive ?? true,
       }
 
-      // Adicionar campos opcionais apenas se tiverem valor
+      // Adicionar campos opcionais apenas se tiverem valor válido
       if (data.phone && data.phone.trim()) {
         submitData.phone = data.phone.trim()
       }
@@ -174,11 +174,20 @@ export function CompanyForm({
         submitData.address = data.address.trim()
       }
 
-      if (data.latitude !== undefined && !isNaN(data.latitude)) {
+      // CORREÇÃO: Só incluir latitude/longitude se forem valores válidos (não zero)
+      if (
+        data.latitude !== undefined &&
+        !isNaN(data.latitude) &&
+        data.latitude !== 0
+      ) {
         submitData.latitude = Number(data.latitude)
       }
 
-      if (data.longitude !== undefined && !isNaN(data.longitude)) {
+      if (
+        data.longitude !== undefined &&
+        !isNaN(data.longitude) &&
+        data.longitude !== 0
+      ) {
         submitData.longitude = Number(data.longitude)
       }
 
@@ -198,7 +207,7 @@ export function CompanyForm({
         submitData.cnpj = data.cnpj.trim()
       }
 
-      console.log('Form submit data:', submitData)
+      console.log('Form submit data (cleaned):', submitData)
 
       if (isEditing) {
         await onSubmit({

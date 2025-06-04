@@ -19,14 +19,24 @@ export type { CreateCompanyInput, UpdateCompanyInput }
 export class CompaniesService {
   async createCompany(input: CreateCompanyInput): Promise<Company> {
     try {
-      // Limpar campos undefined
+      // Limpar campos undefined/null/empty e valores zero para coordenadas
       const cleanInput = Object.fromEntries(
-        Object.entries(input).filter(
-          ([_, value]) => value !== undefined && value !== null && value !== '',
-        ),
+        Object.entries(input).filter(([key, value]) => {
+          // Remover valores undefined, null ou strings vazias
+          if (value === undefined || value === null || value === '') {
+            return false
+          }
+
+          // Remover latitude/longitude se forem zero (considerados inválidos)
+          if ((key === 'latitude' || key === 'longitude') && value === 0) {
+            return false
+          }
+
+          return true
+        }),
       )
 
-      console.log('Creating company with input:', cleanInput)
+      console.log('Creating company with cleaned input:', cleanInput)
 
       const { data } = await apolloClient.mutate({
         mutation: CREATE_COMPANY_MUTATION,
@@ -37,20 +47,40 @@ export class CompaniesService {
       return data.createCompany as Company
     } catch (error) {
       console.error('Create company error:', error)
+      //   // Log detalhado do erro para debugging
+      //   if (error?.graphQLErrors?.length > 0) {
+      //     console.error('GraphQL errors:', error.graphQLErrors)
+      //   }
+      //   if (error?.networkError) {
+      //     console.error('Network error:', error.networkError)
+      //   }
       throw error
     }
   }
 
   async updateCompany(input: UpdateCompanyInput): Promise<Company> {
     try {
-      // Limpar campos undefined
+      // Limpar campos undefined/null/empty e valores zero para coordenadas
       const cleanInput = Object.fromEntries(
-        Object.entries(input).filter(
-          ([_, value]) => value !== undefined && value !== null && value !== '',
-        ),
+        Object.entries(input).filter(([key, value]) => {
+          // Sempre manter o ID
+          if (key === 'id') return true
+
+          // Remover valores undefined, null ou strings vazias
+          if (value === undefined || value === null || value === '') {
+            return false
+          }
+
+          // Remover latitude/longitude se forem zero (considerados inválidos)
+          if ((key === 'latitude' || key === 'longitude') && value === 0) {
+            return false
+          }
+
+          return true
+        }),
       )
 
-      console.log('Updating company with input:', cleanInput)
+      console.log('Updating company with cleaned input:', cleanInput)
 
       const { data } = await apolloClient.mutate({
         mutation: UPDATE_COMPANY_MUTATION,
@@ -61,6 +91,13 @@ export class CompaniesService {
       return data.updateCompany as Company
     } catch (error) {
       console.error('Update company error:', error)
+      // Log detalhado do erro para debugging
+      //   if (error?.graphQLErrors?.length > 0) {
+      //     console.error('GraphQL errors:', error.graphQLErrors)
+      //   }
+      //   if (error?.networkError) {
+      //     console.error('Network error:', error.networkError)
+      //   }
       throw error
     }
   }
