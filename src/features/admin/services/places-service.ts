@@ -30,9 +30,18 @@ export interface UpdatePlaceInput extends CreatePlaceInput {
 export class PlacesService {
   async createPlace(input: CreatePlaceInput): Promise<Place> {
     try {
+      // Limpar campos undefined
+      const cleanInput = Object.fromEntries(
+        Object.entries(input).filter(
+          ([_, value]) => value !== undefined && value !== null && value !== '',
+        ),
+      )
+
+      console.log('Creating place with input:', cleanInput)
+
       const { data } = await apolloClient.mutate({
         mutation: CREATE_PLACE_MUTATION,
-        variables: { createPlaceInput: input },
+        variables: { createPlaceInput: cleanInput },
         refetchQueries: [{ query: GET_PLACES_QUERY }],
       })
 
@@ -45,9 +54,18 @@ export class PlacesService {
 
   async updatePlace(input: UpdatePlaceInput): Promise<Place> {
     try {
+      // Limpar campos undefined
+      const cleanInput = Object.fromEntries(
+        Object.entries(input).filter(
+          ([_, value]) => value !== undefined && value !== null && value !== '',
+        ),
+      )
+
+      console.log('Updating place with input:', cleanInput)
+
       const { data } = await apolloClient.mutate({
         mutation: UPDATE_PLACE_MUTATION,
-        variables: { updatePlaceInput: input },
+        variables: { updatePlaceInput: cleanInput },
         refetchQueries: [{ query: GET_PLACES_QUERY }],
       })
 
@@ -75,7 +93,6 @@ export class PlacesService {
     try {
       const { data } = await apolloClient.query({
         query: GET_PLACES_QUERY,
-        fetchPolicy: 'cache-first',
       })
 
       return data.places.edges.map((edge: any) => edge.node) as Array<Place>

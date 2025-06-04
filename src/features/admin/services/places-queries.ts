@@ -16,11 +16,6 @@ export const CREATE_PLACE_MUTATION = gql`
       longitude
       logo
       banner
-      organizationId
-      organization {
-        id
-        name
-      }
       isActive
       createdAt
       updatedAt
@@ -44,11 +39,6 @@ export const UPDATE_PLACE_MUTATION = gql`
       longitude
       logo
       banner
-      organizationId
-      organization {
-        id
-        name
-      }
       isActive
       createdAt
       updatedAt
@@ -83,11 +73,6 @@ export const GET_PLACES_QUERY = gql`
           longitude
           logo
           banner
-          organizationId
-          organization {
-            id
-            name
-          }
           isActive
           createdAt
           updatedAt
@@ -113,11 +98,6 @@ export const GET_PLACE_BY_ID_QUERY = gql`
       longitude
       logo
       banner
-      organizationId
-      organization {
-        id
-        name
-      }
       isActive
       createdAt
       updatedAt

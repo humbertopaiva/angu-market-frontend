@@ -305,9 +305,12 @@ export function UserForm({
                 Place {selectedRole === 'PLACE_ADMIN' ? '*' : ''}
               </Label>
               <Select
-                value={selectedPlaceId?.toString() || ''}
+                value={selectedPlaceId?.toString() || 'no-place'}
                 onValueChange={(value) =>
-                  setValue('placeId', value ? Number(value) : undefined)
+                  setValue(
+                    'placeId',
+                    value === 'no-place' ? undefined : Number(value),
+                  )
                 }
                 disabled={isLoading}
               >
@@ -315,6 +318,7 @@ export function UserForm({
                   <SelectValue placeholder="Selecione um place" />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="no-place">Nenhum place</SelectItem>
                   {places.map((place) => (
                     <SelectItem key={place.id} value={place.id}>
                       {place.name} - {place.city}, {place.state}

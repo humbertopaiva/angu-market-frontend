@@ -46,8 +46,8 @@ export function UsersView() {
   const [selectedUser, setSelectedUser] = React.useState<User | undefined>()
   const [isFormOpen, setIsFormOpen] = React.useState(false)
   const [searchTerm, setSearchTerm] = React.useState('')
-  const [filterPlace, setFilterPlace] = React.useState<string>('')
-  const [filterRole, setFilterRole] = React.useState<string>('')
+  const [filterPlace, setFilterPlace] = React.useState<string>('all-places')
+  const [filterRole, setFilterRole] = React.useState<string>('all-roles')
 
   useEffect(() => {
     usersViewModel.loadUsers()
@@ -59,9 +59,11 @@ export function UsersView() {
       user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       user.email.toLowerCase().includes(searchTerm.toLowerCase())
 
-    const matchesPlace = !filterPlace || user.place?.id === filterPlace
+    const matchesPlace =
+      filterPlace === 'all-places' || user.place?.id === filterPlace
     const matchesRole =
-      !filterRole || user.userRoles?.[0]?.role?.name === filterRole
+      filterRole === 'all-roles' ||
+      user.userRoles?.[0]?.role?.name === filterRole
 
     return matchesSearch && matchesPlace && matchesRole
   })
@@ -155,7 +157,7 @@ export function UsersView() {
             <SelectValue placeholder="Filtrar por place" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">Todos os places</SelectItem>
+            <SelectItem value="all-places">Todos os places</SelectItem>
             {places.map((place) => (
               <SelectItem key={place.id} value={place.id}>
                 {place.name}
@@ -169,7 +171,7 @@ export function UsersView() {
             <SelectValue placeholder="Filtrar por função" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">Todas as funções</SelectItem>
+            <SelectItem value="all-roles">Todas as funções</SelectItem>
             <SelectItem value="PLACE_ADMIN">Admin do Place</SelectItem>
             <SelectItem value="COMPANY_ADMIN">Admin da Empresa</SelectItem>
             <SelectItem value="COMPANY_STAFF">Funcionário</SelectItem>
@@ -183,24 +185,30 @@ export function UsersView() {
           <CardContent className="flex flex-col items-center justify-center py-12">
             <Users className="h-12 w-12 text-gray-400 mb-4" />
             <h3 className="text-lg font-semibold text-gray-900 mb-2">
-              {searchTerm || filterPlace || filterRole
+              {searchTerm ||
+              filterPlace !== 'all-places' ||
+              filterRole !== 'all-roles'
                 ? 'Nenhum usuário encontrado'
                 : 'Nenhum usuário cadastrado'}
             </h3>
             <p className="text-gray-600 text-center mb-4">
-              {searchTerm || filterPlace || filterRole
+              {searchTerm ||
+              filterPlace !== 'all-places' ||
+              filterRole !== 'all-roles'
                 ? 'Tente ajustar sua busca ou limpar os filtros.'
                 : 'Comece criando seu primeiro usuário para gerenciar acessos.'}
             </p>
-            {!searchTerm && !filterPlace && !filterRole && (
-              <Button
-                onClick={handleCreateUser}
-                className="flex items-center gap-2"
-              >
-                <Plus className="h-4 w-4" />
-                Criar primeiro usuário
-              </Button>
-            )}
+            {!searchTerm &&
+              filterPlace === 'all-places' &&
+              filterRole === 'all-roles' && (
+                <Button
+                  onClick={handleCreateUser}
+                  className="flex items-center gap-2"
+                >
+                  <Plus className="h-4 w-4" />
+                  Criar primeiro usuário
+                </Button>
+              )}
           </CardContent>
         </Card>
       ) : (

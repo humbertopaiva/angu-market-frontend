@@ -1,31 +1,34 @@
-const TOKEN_KEY = '@angu-market:token'
-
-export const tokenStorage = {
-  getToken(): string | null {
-    try {
-      return localStorage.getItem(TOKEN_KEY)
-    } catch {
-      return null
-    }
-  },
+class TokenStorage {
+  private readonly TOKEN_KEY = 'auth_token'
 
   setToken(token: string): void {
     try {
-      localStorage.setItem(TOKEN_KEY, token)
+      localStorage.setItem(this.TOKEN_KEY, token)
     } catch (error) {
       console.error('Error saving token:', error)
     }
-  },
+  }
+
+  getToken(): string | null {
+    try {
+      return localStorage.getItem(this.TOKEN_KEY)
+    } catch (error) {
+      console.error('Error getting token:', error)
+      return null
+    }
+  }
 
   removeToken(): void {
     try {
-      localStorage.removeItem(TOKEN_KEY)
+      localStorage.removeItem(this.TOKEN_KEY)
     } catch (error) {
       console.error('Error removing token:', error)
     }
-  },
+  }
 
   hasToken(): boolean {
     return !!this.getToken()
-  },
+  }
 }
+
+export const tokenStorage = new TokenStorage()

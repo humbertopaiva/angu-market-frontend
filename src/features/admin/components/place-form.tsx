@@ -11,13 +11,8 @@ import type { Place } from '@/types/graphql'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
+import { Textarea } from '@/components/ui/textarea'
+
 import {
   Dialog,
   DialogContent,
@@ -43,10 +38,18 @@ const placeSchema = z.object({
   state: z.string().min(1, 'Estado é obrigatório'),
   neighborhood: z.string().optional(),
   postalCode: z.string().optional(),
-  latitude: z.number().optional(),
-  longitude: z.number().optional(),
-  logo: z.string().optional(),
-  banner: z.string().optional(),
+  latitude: z.coerce.number().optional(),
+  longitude: z.coerce.number().optional(),
+  logo: z
+    .string()
+    .url('Logo deve ser uma URL válida')
+    .optional()
+    .or(z.literal('')),
+  banner: z
+    .string()
+    .url('Banner deve ser uma URL válida')
+    .optional()
+    .or(z.literal('')),
   isActive: z.boolean().optional(),
 })
 
@@ -77,24 +80,9 @@ export function PlaceForm({
   } = useForm<PlaceFormData>({
     resolver: zodResolver(placeSchema),
     mode: 'onChange',
-    defaultValues: place
-      ? {
-          name: place.name,
-          slug: place.slug,
-          description: place.description,
-          city: place.city,
-          state: place.state,
-          neighborhood: place.neighborhood || '',
-          postalCode: place.postalCode || '',
-          latitude: place.latitude,
-          longitude: place.longitude,
-          logo: place.logo || '',
-          banner: place.banner || '',
-          isActive: place.isActive,
-        }
-      : {
-          isActive: true,
-        },
+    defaultValues: {
+      isActive: true,
+    },
   })
 
   React.useEffect(() => {
@@ -107,8 +95,8 @@ export function PlaceForm({
         state: place.state,
         neighborhood: place.neighborhood || '',
         postalCode: place.postalCode || '',
-        latitude: place.latitude,
-        longitude: place.longitude,
+        latitude: place.latitude || undefined,
+        longitude: place.longitude || undefined,
         logo: place.logo || '',
         banner: place.banner || '',
         isActive: place.isActive,
@@ -132,26 +120,57 @@ export function PlaceForm({
   }, [isOpen, place, reset])
 
   const handleFormSubmit = async (data: PlaceFormData) => {
-    const submitData = {
-      ...data,
-      latitude: data.latitude || undefined,
-      longitude: data.longitude || undefined,
-      neighborhood: data.neighborhood || undefined,
-      postalCode: data.postalCode || undefined,
-      logo: data.logo || undefined,
-      banner: data.banner || undefined,
-    }
+    try {
+      // Processar os dados para enviar apenas campos válidos
+      const submitData: any = {
+        name: data.name.trim(),
+        slug: data.slug.trim(),
+        description: data.description.trim(),
+        city: data.city.trim(),
+        state: data.state.trim(),
+        isActive: data.isActive ?? true,
+      }
 
-    if (isEditing) {
-      await onSubmit({
-        ...submitData,
-        id: Number(place.id),
-      } as UpdatePlaceInput)
-    } else {
-      await onSubmit(submitData as CreatePlaceInput)
-    }
+      // Adicionar campos opcionais apenas se tiverem valor
+      if (data.neighborhood && data.neighborhood.trim()) {
+        submitData.neighborhood = data.neighborhood.trim()
+      }
 
-    onClose()
+      if (data.postalCode && data.postalCode.trim()) {
+        submitData.postalCode = data.postalCode.trim()
+      }
+
+      if (data.latitude !== undefined && !isNaN(data.latitude)) {
+        submitData.latitude = Number(data.latitude)
+      }
+
+      if (data.longitude !== undefined && !isNaN(data.longitude)) {
+        submitData.longitude = Number(data.longitude)
+      }
+
+      if (data.logo && data.logo.trim()) {
+        submitData.logo = data.logo.trim()
+      }
+
+      if (data.banner && data.banner.trim()) {
+        submitData.banner = data.banner.trim()
+      }
+
+      console.log('Form submit data:', submitData)
+
+      if (isEditing) {
+        await onSubmit({
+          ...submitData,
+          id: Number(place.id),
+        } as UpdatePlaceInput)
+      } else {
+        await onSubmit(submitData as CreatePlaceInput)
+      }
+
+      onClose()
+    } catch (error) {
+      console.error('Form submission error:', error)
+    }
   }
 
   const handleClose = () => {
@@ -212,11 +231,12 @@ export function PlaceForm({
             <Label htmlFor="description" className="text-sm font-medium">
               Descrição *
             </Label>
-            <Input
+            <Textarea
               id="description"
               placeholder="Descrição do place"
               {...register('description')}
               disabled={isLoading}
+              rows={3}
             />
             {errors.description && (
               <p className="text-sm text-red-600">
@@ -293,7 +313,7 @@ export function PlaceForm({
                 type="number"
                 step="any"
                 placeholder="-23.5505"
-                {...register('latitude', { valueAsNumber: true })}
+                {...register('latitude')}
                 disabled={isLoading}
               />
             </div>
@@ -307,7 +327,7 @@ export function PlaceForm({
                 type="number"
                 step="any"
                 placeholder="-46.6333"
-                {...register('longitude', { valueAsNumber: true })}
+                {...register('longitude')}
                 disabled={isLoading}
               />
             </div>
@@ -325,6 +345,9 @@ export function PlaceForm({
                 {...register('logo')}
                 disabled={isLoading}
               />
+              {errors.logo && (
+                <p className="text-sm text-red-600">{errors.logo.message}</p>
+              )}
             </div>
 
             <div className="space-y-2">
@@ -338,6 +361,9 @@ export function PlaceForm({
                 {...register('banner')}
                 disabled={isLoading}
               />
+              {errors.banner && (
+                <p className="text-sm text-red-600">{errors.banner.message}</p>
+              )}
             </div>
           </div>
 
