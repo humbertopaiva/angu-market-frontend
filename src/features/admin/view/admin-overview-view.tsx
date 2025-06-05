@@ -204,7 +204,7 @@ export function AdminOverviewView() {
                       <div>
                         <p className="text-sm font-medium">{company.name}</p>
                         <p className="text-xs text-gray-500">
-                          {company.place?.name}
+                          {company.place.name}
                         </p>
                       </div>
                       <span

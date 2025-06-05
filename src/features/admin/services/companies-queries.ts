@@ -33,6 +33,56 @@ export const CREATE_COMPANY_MUTATION = gql`
   }
 `
 
+export const CREATE_COMPANY_WITH_USERS_MUTATION = gql`
+  mutation CreateCompanyWithUsers(
+    $createCompanyInput: CreateCompanyEnhancedInput!
+  ) {
+    createCompanyWithUsers(createCompanyInput: $createCompanyInput) {
+      id
+      uuid
+      name
+      slug
+      description
+      phone
+      email
+      website
+      address
+      latitude
+      longitude
+      openingHours
+      logo
+      banner
+      cnpj
+      placeId
+      place {
+        id
+        name
+        city
+        state
+      }
+      users {
+        id
+        uuid
+        name
+        email
+        phone
+        isActive
+        userRoles {
+          id
+          role {
+            id
+            name
+            description
+          }
+        }
+      }
+      isActive
+      createdAt
+      updatedAt
+    }
+  }
+`
+
 export const UPDATE_COMPANY_MUTATION = gql`
   mutation UpdateCompany($updateCompanyInput: UpdateCompanyInput!) {
     updateCompany(updateCompanyInput: $updateCompanyInput) {

@@ -20,11 +20,13 @@ import { Route as AuthVerifyEmailImport } from './routes/auth/verify-email'
 import { Route as AuthSignupImport } from './routes/auth/signup'
 import { Route as AuthLoginImport } from './routes/auth/login'
 import { Route as AuthForgotPasswordImport } from './routes/auth/forgot-password'
+import { Route as AuthCompanyLoginImport } from './routes/auth/company-login'
 import { Route as AdminUsersImport } from './routes/admin/users'
 import { Route as AdminPlacesImport } from './routes/admin/places'
 import { Route as AdminCompaniesImport } from './routes/admin/companies'
 import { Route as AuthVerifyEmailTokenImport } from './routes/auth/verify-email/$token'
 import { Route as AuthResetPasswordTokenImport } from './routes/auth/reset-password/$token'
+import { Route as AuthCompanyDashboardImport } from './routes/auth/company/dashboard'
 
 // Create/Update Routes
 
@@ -82,6 +84,12 @@ const AuthForgotPasswordRoute = AuthForgotPasswordImport.update({
   getParentRoute: () => AuthRoute,
 } as any)
 
+const AuthCompanyLoginRoute = AuthCompanyLoginImport.update({
+  id: '/company-login',
+  path: '/company-login',
+  getParentRoute: () => AuthRoute,
+} as any)
+
 const AdminUsersRoute = AdminUsersImport.update({
   id: '/users',
   path: '/users',
@@ -109,6 +117,12 @@ const AuthVerifyEmailTokenRoute = AuthVerifyEmailTokenImport.update({
 const AuthResetPasswordTokenRoute = AuthResetPasswordTokenImport.update({
   id: '/reset-password/$token',
   path: '/reset-password/$token',
+  getParentRoute: () => AuthRoute,
+} as any)
+
+const AuthCompanyDashboardRoute = AuthCompanyDashboardImport.update({
+  id: '/company/dashboard',
+  path: '/company/dashboard',
   getParentRoute: () => AuthRoute,
 } as any)
 
@@ -165,6 +179,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminUsersImport
       parentRoute: typeof AdminImport
     }
+    '/auth/company-login': {
+      id: '/auth/company-login'
+      path: '/company-login'
+      fullPath: '/auth/company-login'
+      preLoaderRoute: typeof AuthCompanyLoginImport
+      parentRoute: typeof AuthImport
+    }
     '/auth/forgot-password': {
       id: '/auth/forgot-password'
       path: '/forgot-password'
@@ -199,6 +220,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/admin/'
       preLoaderRoute: typeof AdminIndexImport
       parentRoute: typeof AdminImport
+    }
+    '/auth/company/dashboard': {
+      id: '/auth/company/dashboard'
+      path: '/company/dashboard'
+      fullPath: '/auth/company/dashboard'
+      preLoaderRoute: typeof AuthCompanyDashboardImport
+      parentRoute: typeof AuthImport
     }
     '/auth/reset-password/$token': {
       id: '/auth/reset-password/$token'
@@ -248,18 +276,22 @@ const AuthVerifyEmailRouteWithChildren = AuthVerifyEmailRoute._addFileChildren(
 )
 
 interface AuthRouteChildren {
+  AuthCompanyLoginRoute: typeof AuthCompanyLoginRoute
   AuthForgotPasswordRoute: typeof AuthForgotPasswordRoute
   AuthLoginRoute: typeof AuthLoginRoute
   AuthSignupRoute: typeof AuthSignupRoute
   AuthVerifyEmailRoute: typeof AuthVerifyEmailRouteWithChildren
+  AuthCompanyDashboardRoute: typeof AuthCompanyDashboardRoute
   AuthResetPasswordTokenRoute: typeof AuthResetPasswordTokenRoute
 }
 
 const AuthRouteChildren: AuthRouteChildren = {
+  AuthCompanyLoginRoute: AuthCompanyLoginRoute,
   AuthForgotPasswordRoute: AuthForgotPasswordRoute,
   AuthLoginRoute: AuthLoginRoute,
   AuthSignupRoute: AuthSignupRoute,
   AuthVerifyEmailRoute: AuthVerifyEmailRouteWithChildren,
+  AuthCompanyDashboardRoute: AuthCompanyDashboardRoute,
   AuthResetPasswordTokenRoute: AuthResetPasswordTokenRoute,
 }
 
@@ -273,11 +305,13 @@ export interface FileRoutesByFullPath {
   '/admin/companies': typeof AdminCompaniesRoute
   '/admin/places': typeof AdminPlacesRoute
   '/admin/users': typeof AdminUsersRoute
+  '/auth/company-login': typeof AuthCompanyLoginRoute
   '/auth/forgot-password': typeof AuthForgotPasswordRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/signup': typeof AuthSignupRoute
   '/auth/verify-email': typeof AuthVerifyEmailRouteWithChildren
   '/admin/': typeof AdminIndexRoute
+  '/auth/company/dashboard': typeof AuthCompanyDashboardRoute
   '/auth/reset-password/$token': typeof AuthResetPasswordTokenRoute
   '/auth/verify-email/$token': typeof AuthVerifyEmailTokenRoute
 }
@@ -289,11 +323,13 @@ export interface FileRoutesByTo {
   '/admin/companies': typeof AdminCompaniesRoute
   '/admin/places': typeof AdminPlacesRoute
   '/admin/users': typeof AdminUsersRoute
+  '/auth/company-login': typeof AuthCompanyLoginRoute
   '/auth/forgot-password': typeof AuthForgotPasswordRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/signup': typeof AuthSignupRoute
   '/auth/verify-email': typeof AuthVerifyEmailRouteWithChildren
   '/admin': typeof AdminIndexRoute
+  '/auth/company/dashboard': typeof AuthCompanyDashboardRoute
   '/auth/reset-password/$token': typeof AuthResetPasswordTokenRoute
   '/auth/verify-email/$token': typeof AuthVerifyEmailTokenRoute
 }
@@ -307,11 +343,13 @@ export interface FileRoutesById {
   '/admin/companies': typeof AdminCompaniesRoute
   '/admin/places': typeof AdminPlacesRoute
   '/admin/users': typeof AdminUsersRoute
+  '/auth/company-login': typeof AuthCompanyLoginRoute
   '/auth/forgot-password': typeof AuthForgotPasswordRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/signup': typeof AuthSignupRoute
   '/auth/verify-email': typeof AuthVerifyEmailRouteWithChildren
   '/admin/': typeof AdminIndexRoute
+  '/auth/company/dashboard': typeof AuthCompanyDashboardRoute
   '/auth/reset-password/$token': typeof AuthResetPasswordTokenRoute
   '/auth/verify-email/$token': typeof AuthVerifyEmailTokenRoute
 }
@@ -326,11 +364,13 @@ export interface FileRouteTypes {
     | '/admin/companies'
     | '/admin/places'
     | '/admin/users'
+    | '/auth/company-login'
     | '/auth/forgot-password'
     | '/auth/login'
     | '/auth/signup'
     | '/auth/verify-email'
     | '/admin/'
+    | '/auth/company/dashboard'
     | '/auth/reset-password/$token'
     | '/auth/verify-email/$token'
   fileRoutesByTo: FileRoutesByTo
@@ -341,11 +381,13 @@ export interface FileRouteTypes {
     | '/admin/companies'
     | '/admin/places'
     | '/admin/users'
+    | '/auth/company-login'
     | '/auth/forgot-password'
     | '/auth/login'
     | '/auth/signup'
     | '/auth/verify-email'
     | '/admin'
+    | '/auth/company/dashboard'
     | '/auth/reset-password/$token'
     | '/auth/verify-email/$token'
   id:
@@ -357,11 +399,13 @@ export interface FileRouteTypes {
     | '/admin/companies'
     | '/admin/places'
     | '/admin/users'
+    | '/auth/company-login'
     | '/auth/forgot-password'
     | '/auth/login'
     | '/auth/signup'
     | '/auth/verify-email'
     | '/admin/'
+    | '/auth/company/dashboard'
     | '/auth/reset-password/$token'
     | '/auth/verify-email/$token'
   fileRoutesById: FileRoutesById
@@ -412,10 +456,12 @@ export const routeTree = rootRoute
     "/auth": {
       "filePath": "auth.tsx",
       "children": [
+        "/auth/company-login",
         "/auth/forgot-password",
         "/auth/login",
         "/auth/signup",
         "/auth/verify-email",
+        "/auth/company/dashboard",
         "/auth/reset-password/$token"
       ]
     },
@@ -433,6 +479,10 @@ export const routeTree = rootRoute
     "/admin/users": {
       "filePath": "admin/users.tsx",
       "parent": "/admin"
+    },
+    "/auth/company-login": {
+      "filePath": "auth/company-login.tsx",
+      "parent": "/auth"
     },
     "/auth/forgot-password": {
       "filePath": "auth/forgot-password.tsx",
@@ -456,6 +506,10 @@ export const routeTree = rootRoute
     "/admin/": {
       "filePath": "admin/index.tsx",
       "parent": "/admin"
+    },
+    "/auth/company/dashboard": {
+      "filePath": "auth/company/dashboard.tsx",
+      "parent": "/auth"
     },
     "/auth/reset-password/$token": {
       "filePath": "auth/reset-password/$token.tsx",
