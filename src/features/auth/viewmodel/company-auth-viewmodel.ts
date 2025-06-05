@@ -1,42 +1,57 @@
-// src/features/auth/viewmodel/company-auth-viewmodel.ts
-import { useNavigate } from '@tanstack/react-router'
+import { useState } from 'react'
 import { toast } from 'sonner'
+import { useNavigate } from '@tanstack/react-router'
 import { CompanyAuthService } from '../services/company-auth-service'
 import { useAuthStore } from '../stores/auth-store'
 import type { CompanyLoginInput } from '@/types/graphql'
 
 export class CompanyAuthViewModel {
   private companyAuthService: CompanyAuthService
-  private navigate: ReturnType<typeof useNavigate>
   private setUser: (user: any) => void
   private setLoading: (loading: boolean) => void
+  private navigate: ReturnType<typeof useNavigate>
 
   constructor(
     companyAuthService: CompanyAuthService,
-    navigate: ReturnType<typeof useNavigate>,
     setUser: (user: any) => void,
     setLoading: (loading: boolean) => void,
+    navigate: ReturnType<typeof useNavigate>,
   ) {
     this.companyAuthService = companyAuthService
-    this.navigate = navigate
     this.setUser = setUser
     this.setLoading = setLoading
+    this.navigate = navigate
   }
 
-  async companyLogin(input: CompanyLoginInput): Promise<void> {
+  async login(input: CompanyLoginInput): Promise<boolean> {
     try {
       this.setLoading(true)
 
+      // Validar entrada
+      const validationErrors =
+        this.companyAuthService.validateCompanyLogin(input)
+      if (validationErrors.length > 0) {
+        toast.error('Erro de validação', {
+          description: validationErrors.join(', '),
+        })
+        return false
+      }
+
+      // Realizar login
       const response = await this.companyAuthService.companyLogin(input)
 
+      // Armazenar dados do usuário
       this.setUser(response.user)
 
+      // Mostrar sucesso
       toast.success('Login realizado com sucesso!', {
-        description: `Bem-vindo à ${response.company.name}, ${response.user.name}!`,
+        description: `Bem-vindo à ${response.company.name}`,
       })
 
       // Redirecionar para dashboard da empresa
-      this.navigate({ to: '/company/dashboard' })
+      this.navigate({ to: '/auth/company/dashboard' })
+
+      return true
     } catch (error: any) {
       console.error('Company login error:', error)
 
@@ -48,9 +63,11 @@ export class CompanyAuthViewModel {
         errorMessage = 'Erro de conexão com o servidor'
       }
 
-      toast.error('Erro no login empresarial', {
+      toast.error('Erro no login', {
         description: errorMessage,
       })
+
+      return false
     } finally {
       this.setLoading(false)
     }
@@ -63,23 +80,33 @@ export class CompanyAuthViewModel {
       this.navigate({ to: '/auth/company-login' })
 
       toast.success('Logout realizado', {
-        description: 'Você foi desconectado com sucesso.',
+        description: 'Você foi desconectado da empresa.',
       })
     } catch (error) {
-      console.error('Logout error:', error)
+      console.error('Company logout error:', error)
     }
+  }
+
+  formatCompanySlug(slug: string): string {
+    return this.companyAuthService.formatCompanySlug(slug)
+  }
+
+  extractSlugFromUrl(): string | null {
+    return this.companyAuthService.extractSlugFromUrl()
   }
 }
 
 export function useCompanyAuthViewModel() {
-  const navigate = useNavigate()
   const { setUser, setLoading } = useAuthStore()
+  const navigate = useNavigate()
   const companyAuthService = new CompanyAuthService()
 
-  return new CompanyAuthViewModel(
+  const viewModel = new CompanyAuthViewModel(
     companyAuthService,
-    navigate,
     setUser,
     setLoading,
+    navigate,
   )
+
+  return viewModel
 }

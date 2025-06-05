@@ -1,4 +1,3 @@
-// src/features/auth/services/company-auth-queries.ts
 import { gql } from '@apollo/client'
 
 export const COMPANY_LOGIN_MUTATION = gql`
@@ -19,19 +18,11 @@ export const COMPANY_LOGIN_MUTATION = gql`
         companyId
         organization {
           id
-          uuid
           name
-          slug
-          description
-          logo
-          banner
         }
         place {
           id
-          uuid
           name
-          slug
-          description
           city
           state
         }
@@ -41,6 +32,13 @@ export const COMPANY_LOGIN_MUTATION = gql`
           name
           slug
           description
+          phone
+          email
+          website
+          address
+          logo
+          banner
+          isActive
         }
         userRoles {
           id
@@ -63,8 +61,13 @@ export const COMPANY_LOGIN_MUTATION = gql`
         email
         website
         address
+        latitude
+        longitude
+        openingHours
         logo
         banner
+        cnpj
+        placeId
         place {
           id
           name
@@ -88,8 +91,8 @@ export const GET_AVAILABLE_USERS_FOR_COMPANY_QUERY = gql`
       email
       phone
       avatar
-      isVerified
       isActive
+      isVerified
       userRoles {
         id
         role {
@@ -98,8 +101,6 @@ export const GET_AVAILABLE_USERS_FOR_COMPANY_QUERY = gql`
           description
         }
       }
-      createdAt
-      updatedAt
     }
   }
 `

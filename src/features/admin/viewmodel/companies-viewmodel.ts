@@ -1,12 +1,13 @@
 // src/features/admin/viewmodel/companies-viewmodel.ts - CORRIGIDO
 import { useState } from 'react'
 import { toast } from 'sonner'
+
 import { CompaniesService } from '../services/companies-service'
 import type {
+  Company,
   CreateCompanyInput,
   UpdateCompanyInput,
-} from '../services/companies-service'
-import type { Company } from '@/types/graphql'
+} from '@/types/graphql'
 
 export class CompaniesViewModel {
   private companiesService: CompaniesService

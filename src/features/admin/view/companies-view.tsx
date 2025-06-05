@@ -2,6 +2,7 @@ import React, { useEffect } from 'react'
 import {
   Building,
   Clock,
+  Crown,
   Edit,
   Globe,
   Loader2,
@@ -11,9 +12,12 @@ import {
   Phone,
   Plus,
   Search,
+  Settings,
   Trash2,
+  Users,
 } from 'lucide-react'
 import { CompanyForm } from '../components/company-form'
+import { CompanyAdminManager } from '../components/company-admin-manager'
 import { useCompaniesViewModel } from '../viewmodel/companies-viewmodel'
 import { usePlacesViewModel } from '../viewmodel/places-viewmodel'
 
@@ -25,6 +29,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import {
@@ -34,6 +39,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 import { useAuthStore } from '@/features/auth/stores/auth-store'
 import {
   canManageCompanies,
@@ -56,6 +68,12 @@ export function CompaniesView() {
   const [isFormOpen, setIsFormOpen] = React.useState(false)
   const [searchTerm, setSearchTerm] = React.useState('')
   const [filterPlace, setFilterPlace] = React.useState<string>('all-places')
+
+  // NOVO: Estados para gestão de admin
+  const [isAdminManagerOpen, setIsAdminManagerOpen] = React.useState(false)
+  const [selectedCompanyForAdmin, setSelectedCompanyForAdmin] = React.useState<
+    Company | undefined
+  >()
 
   useEffect(() => {
     if (isPlaceAdmin(user) && user?.placeId) {
@@ -140,6 +158,21 @@ export function CompaniesView() {
     }
   }
 
+  // NOVO: Função para abrir gestão de admin
+  const handleManageAdmin = (company: Company) => {
+    if (!canManageSpecificCompany(user, Number(company.placeId))) {
+      return
+    }
+    setSelectedCompanyForAdmin(company)
+    setIsAdminManagerOpen(true)
+  }
+
+  // NOVO: Função para atualizar empresa após mudanças de admin
+  const handleCompanyUpdate = (updatedCompany: Company) => {
+    // Atualizar a lista de empresas
+    companiesViewModel.loadCompanies()
+  }
+
   const handleFormSubmit = async (data: any) => {
     if (selectedCompany) {
       await companiesViewModel.updateCompany(data)
@@ -162,6 +195,19 @@ export function CompaniesView() {
     } else {
       companiesViewModel.loadCompaniesByPlace(Number(value))
     }
+  }
+
+  // NOVO: Função para obter admins da empresa
+  const getCompanyAdmins = (company: Company): string => {
+    if (!company.users) return 'Sem admin'
+
+    const admins = company.users.filter((user) =>
+      user.userRoles?.some((ur) => ur.role.name === 'COMPANY_ADMIN'),
+    )
+
+    if (admins.length === 0) return 'Sem admin'
+    if (admins.length === 1) return admins[0].name
+    return `${admins[0].name} +${admins.length - 1}`
   }
 
   if (isCompaniesLoading && companies.length === 0) {
@@ -309,6 +355,13 @@ export function CompaniesView() {
                             Editar
                           </DropdownMenuItem>
                           <DropdownMenuItem
+                            onClick={() => handleManageAdmin(company)}
+                          >
+                            <Crown className="mr-2 h-4 w-4" />
+                            Gerenciar Admins
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
                             onClick={() => handleDeleteCompany(company)}
                             className="text-red-600"
                           >
@@ -325,6 +378,13 @@ export function CompaniesView() {
                     <p className="text-sm text-gray-600 line-clamp-2">
                       {company.description}
                     </p>
+
+                    {/* NOVO: Mostrar admin da empresa */}
+                    <div className="flex items-center gap-2 text-sm text-gray-600">
+                      <Crown className="h-4 w-4" />
+                      <span className="font-medium">Admin:</span>
+                      <span>{getCompanyAdmins(company)}</span>
+                    </div>
 
                     {company.phone && (
                       <div className="flex items-center gap-2 text-sm text-gray-600">
@@ -375,6 +435,21 @@ export function CompaniesView() {
                         /{company.slug}
                       </span>
                     </div>
+
+                    {/* NOVO: Botão rápido para gerenciar admin */}
+                    {canManageThisCompany && (
+                      <div className="pt-2 border-t">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleManageAdmin(company)}
+                          className="w-full flex items-center gap-2"
+                        >
+                          <Settings className="h-4 w-4" />
+                          Gerenciar Admins
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 </CardContent>
               </Card>
@@ -383,6 +458,7 @@ export function CompaniesView() {
         </div>
       )}
 
+      {/* Dialogs */}
       <CompanyForm
         company={selectedCompany}
         places={availablePlaces}
@@ -391,6 +467,30 @@ export function CompaniesView() {
         onSubmit={handleFormSubmit}
         isLoading={isCompaniesLoading}
       />
+
+      {/* NOVO: Dialog para gestão de admin */}
+      <Dialog open={isAdminManagerOpen} onOpenChange={setIsAdminManagerOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Crown className="h-5 w-5" />
+              Gestão de Administradores
+            </DialogTitle>
+            <DialogDescription>
+              Gerencie os administradores da empresa "
+              {selectedCompanyForAdmin?.name}".
+            </DialogDescription>
+          </DialogHeader>
+
+          {selectedCompanyForAdmin && (
+            <CompanyAdminManager
+              company={selectedCompanyForAdmin}
+              placeId={Number(selectedCompanyForAdmin.placeId)}
+              onCompanyUpdate={handleCompanyUpdate}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
