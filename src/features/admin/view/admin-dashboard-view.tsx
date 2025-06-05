@@ -24,7 +24,13 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { useAuthStore } from '@/features/auth/stores/auth-store'
 import { useDashboardViewModel } from '@/features/dashboard/viewmodel/dashboard-viewmodel'
-import { canManageCompanies, isSuperAdmin } from '@/utils/role-helpers'
+import {
+  canManageCompanies,
+  canManagePlaces,
+  canManageUsers,
+  isPlaceAdmin,
+  isSuperAdmin,
+} from '@/utils/role-helpers'
 
 const navigationItems = [
   {
@@ -32,24 +38,28 @@ const navigationItems = [
     href: '/admin',
     icon: LayoutDashboard,
     requiresSuperAdmin: false,
+    requiresPlaceAdmin: false,
   },
   {
     title: 'Places',
     href: '/admin/places',
     icon: Building2,
     requiresSuperAdmin: true,
+    requiresPlaceAdmin: false,
   },
   {
     title: 'Empresas',
     href: '/admin/companies',
     icon: Building,
     requiresSuperAdmin: false,
+    requiresPlaceAdmin: true,
   },
   {
     title: 'Usuários',
     href: '/admin/users',
     icon: Users,
-    requiresSuperAdmin: true,
+    requiresSuperAdmin: false,
+    requiresPlaceAdmin: true,
   },
 ]
 
@@ -84,19 +94,42 @@ export function AdminDashboardView() {
     return location.pathname.startsWith(href)
   }
 
-  // Filtrar itens de navegação baseado nas permissões do usuário
+  // CORREÇÃO: Filtrar itens de navegação baseado nas permissões do usuário
   const visibleNavigationItems = navigationItems.filter((item) => {
-    if (item.requiresSuperAdmin && !isSuperAdmin(user)) {
+    // Verificações específicas por funcionalidade
+    if (item.href === '/admin/places' && !canManagePlaces(user)) {
       return false
     }
 
-    // Para empresas, verificar se pode gerenciar
     if (item.href === '/admin/companies' && !canManageCompanies(user)) {
+      return false
+    }
+
+    if (item.href === '/admin/users' && !canManageUsers(user)) {
+      return false
+    }
+
+    // Se requer super admin e não é super admin
+    if (item.requiresSuperAdmin && !isSuperAdmin(user)) {
       return false
     }
 
     return true
   })
+
+  // CORREÇÃO: Determinar título do painel baseado no tipo de usuário
+  const getPanelTitle = () => {
+    if (!user) {
+      return ''
+    }
+    if (isSuperAdmin(user)) {
+      return 'Painel Super Administrativo'
+    } else if (isPlaceAdmin(user)) {
+      return `Painel do Place - ${user.place?.name || 'Place'}`
+    } else {
+      return 'Painel Administrativo'
+    }
+  }
 
   if (!user) {
     return null
@@ -116,7 +149,7 @@ export function AdminDashboardView() {
             <Menu className="h-5 w-5" />
           </Button>
           <h1 className="text-xl font-semibold text-gray-900">
-            Painel Administrativo
+            {getPanelTitle()}
           </h1>
         </div>
 
@@ -150,6 +183,14 @@ export function AdminDashboardView() {
                   </p>
                   <p className="text-xs leading-none text-muted-foreground">
                     {user.email}
+                  </p>
+                  {/* ADIÇÃO: Mostrar tipo de admin */}
+                  <p className="text-xs leading-none text-blue-600 font-medium">
+                    {isSuperAdmin(user)
+                      ? 'Super Admin'
+                      : isPlaceAdmin(user)
+                        ? 'Admin do Place'
+                        : 'Admin'}
                   </p>
                 </div>
               </DropdownMenuLabel>

@@ -2,7 +2,7 @@ import { Navigate, createFileRoute } from '@tanstack/react-router'
 import { tokenStorage } from '@/infra/storage/token-storage'
 import { useAuthStore } from '@/features/auth/stores/auth-store'
 import { UsersView } from '@/features/admin/view/users-view'
-import { isSuperAdmin } from '@/utils/role-helpers'
+import { canManageUsers } from '@/utils/role-helpers'
 
 export const Route = createFileRoute('/admin/users')({
   component: AdminUsersPage,
@@ -34,8 +34,8 @@ function AdminUsersPage() {
     return <Navigate to="/auth/login" />
   }
 
-  // Verificar se é super admin
-  if (!isSuperAdmin(user)) {
+  // CORREÇÃO: Verificar se pode gerenciar usuários (incluindo place admin)
+  if (!canManageUsers(user)) {
     return <Navigate to="/dashboard" />
   }
 

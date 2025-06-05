@@ -2,7 +2,7 @@ import { Navigate, Outlet, createFileRoute } from '@tanstack/react-router'
 import { tokenStorage } from '@/infra/storage/token-storage'
 import { useAuthStore } from '@/features/auth/stores/auth-store'
 import { AdminDashboardView } from '@/features/admin/view/admin-dashboard-view'
-import { isSuperAdmin } from '@/utils/role-helpers'
+import { canAccessAdmin } from '@/utils/role-helpers'
 
 export const Route = createFileRoute('/admin')({
   component: AdminLayout,
@@ -37,8 +37,8 @@ function AdminLayout() {
     return <Navigate to="/auth/login" />
   }
 
-  // Verificar se é super admin
-  if (!isSuperAdmin(user)) {
+  // CORREÇÃO: Verificar se pode acessar admin (incluindo place admin)
+  if (!canAccessAdmin(user)) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center max-w-md mx-auto px-4">
@@ -62,7 +62,7 @@ function AdminLayout() {
           </h2>
           <p className="text-gray-600 mb-6">
             Você não tem permissão para acessar o painel administrativo. Apenas
-            Super Administradores podem acessar esta área.
+            Administradores podem acessar esta área.
           </p>
           <button
             onClick={() => (window.location.href = '/dashboard')}

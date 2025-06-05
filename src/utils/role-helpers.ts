@@ -49,6 +49,15 @@ export function canManageCompanies(user: User | null): boolean {
   ])
 }
 
+// CORREÇÃO: Função para verificar se pode acessar painel administrativo
+export function canAccessAdmin(user: User | null): boolean {
+  return hasAnyRole(user, [
+    RoleType.SUPER_ADMIN,
+    RoleType.ORGANIZATION_ADMIN,
+    RoleType.PLACE_ADMIN,
+  ])
+}
+
 // Nova função para verificar se pode criar empresas em um place específico
 export function canCreateCompanyInPlace(
   user: User | null,

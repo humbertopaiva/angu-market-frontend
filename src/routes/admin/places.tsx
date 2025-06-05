@@ -2,7 +2,7 @@ import { Navigate, createFileRoute } from '@tanstack/react-router'
 import { tokenStorage } from '@/infra/storage/token-storage'
 import { useAuthStore } from '@/features/auth/stores/auth-store'
 import { PlacesView } from '@/features/admin/view/places-view'
-import { isSuperAdmin } from '@/utils/role-helpers'
+import { canManagePlaces } from '@/utils/role-helpers'
 
 export const Route = createFileRoute('/admin/places')({
   component: AdminPlacesPage,
@@ -34,8 +34,8 @@ function AdminPlacesPage() {
     return <Navigate to="/auth/login" />
   }
 
-  // Verificar se é super admin
-  if (!isSuperAdmin(user)) {
+  // MANTER: Apenas super admin pode gerenciar places
+  if (!canManagePlaces(user)) {
     return <Navigate to="/dashboard" />
   }
 

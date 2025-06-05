@@ -1,4 +1,3 @@
-// src/routes/admin/companies.tsx
 import { Navigate, createFileRoute } from '@tanstack/react-router'
 import { tokenStorage } from '@/infra/storage/token-storage'
 import { useAuthStore } from '@/features/auth/stores/auth-store'
@@ -35,7 +34,7 @@ function AdminCompaniesPage() {
     return <Navigate to="/auth/login" />
   }
 
-  // Verificar se pode gerenciar empresas
+  // CORREÇÃO: Verificar se pode gerenciar empresas (incluindo place admin)
   if (!canManageCompanies(user)) {
     return <Navigate to="/dashboard" />
   }
