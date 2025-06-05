@@ -1,4 +1,4 @@
-// src/features/admin/services/companies-queries.ts
+// src/features/admin/services/companies-queries.ts - CORRIGIDO
 import { gql } from '@apollo/client'
 
 export const CREATE_COMPANY_MUTATION = gql`
@@ -67,45 +67,39 @@ export const UPDATE_COMPANY_MUTATION = gql`
 
 export const DELETE_COMPANY_MUTATION = gql`
   mutation RemoveCompany($id: Int!) {
-    removeCompany(id: $id) {
-      id
-      name
-    }
+    removeCompany(id: $id)
   }
 `
 
+// CORREÇÃO: Query simples sem estrutura edges/node
 export const GET_COMPANIES_QUERY = gql`
   query GetCompanies {
     companies {
-      edges {
-        node {
-          id
-          uuid
-          name
-          slug
-          description
-          phone
-          email
-          website
-          address
-          latitude
-          longitude
-          openingHours
-          logo
-          banner
-          cnpj
-          placeId
-          place {
-            id
-            name
-            city
-            state
-          }
-          isActive
-          createdAt
-          updatedAt
-        }
+      id
+      uuid
+      name
+      slug
+      description
+      phone
+      email
+      website
+      address
+      latitude
+      longitude
+      openingHours
+      logo
+      banner
+      cnpj
+      placeId
+      place {
+        id
+        name
+        city
+        state
       }
+      isActive
+      createdAt
+      updatedAt
     }
   }
 `

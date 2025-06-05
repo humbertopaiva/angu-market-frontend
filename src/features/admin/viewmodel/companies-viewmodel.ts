@@ -1,4 +1,4 @@
-// src/features/admin/viewmodel/companies-viewmodel.ts
+// src/features/admin/viewmodel/companies-viewmodel.ts - CORRIGIDO
 import { useState } from 'react'
 import { toast } from 'sonner'
 import { CompaniesService } from '../services/companies-service'
@@ -30,7 +30,8 @@ export class CompaniesViewModel {
     try {
       this.setLoading(true)
       const companies = await this.companiesService.getCompanies()
-      this.setCompanies(companies)
+      // CORREÇÃO: Criar uma nova cópia do array para evitar mutação
+      this.setCompanies([...companies])
     } catch (error: any) {
       console.error('Error loading companies:', error)
       toast.error('Erro ao carregar empresas', {
@@ -45,7 +46,8 @@ export class CompaniesViewModel {
     try {
       this.setLoading(true)
       const companies = await this.companiesService.getCompaniesByPlace(placeId)
-      this.setCompanies(companies)
+      // CORREÇÃO: Criar uma nova cópia do array para evitar mutação
+      this.setCompanies([...companies])
     } catch (error: any) {
       console.error('Error loading companies by place:', error)
       toast.error('Erro ao carregar empresas do place', {
@@ -60,6 +62,7 @@ export class CompaniesViewModel {
     try {
       this.setLoading(true)
       const newCompany = await this.companiesService.createCompany(input)
+      // CORREÇÃO: Criar uma nova cópia do array com a nova empresa
       this.setCompanies([...this.companies, newCompany])
 
       toast.success('Empresa criada com sucesso!', {
@@ -80,10 +83,11 @@ export class CompaniesViewModel {
     try {
       this.setLoading(true)
       const updatedCompany = await this.companiesService.updateCompany(input)
+      // CORREÇÃO: Criar uma nova cópia do array com a empresa atualizada
       const updatedCompanies = this.companies.map((company) =>
-        company.id === updatedCompany.id ? updatedCompany : company,
+        company.id === updatedCompany.id ? { ...updatedCompany } : company,
       )
-      this.setCompanies(updatedCompanies)
+      this.setCompanies([...updatedCompanies])
 
       toast.success('Empresa atualizada com sucesso!', {
         description: `${updatedCompany.name} foi atualizada.`,
@@ -103,10 +107,11 @@ export class CompaniesViewModel {
     try {
       this.setLoading(true)
       await this.companiesService.deleteCompany(id)
+      // CORREÇÃO: Criar uma nova cópia do array sem a empresa removida
       const filteredCompanies = this.companies.filter(
         (company) => Number(company.id) !== id,
       )
-      this.setCompanies(filteredCompanies)
+      this.setCompanies([...filteredCompanies])
 
       toast.success('Empresa removida com sucesso!', {
         description: `${name} foi removida.`,
@@ -141,7 +146,8 @@ export function useCompaniesViewModel() {
   const viewModel = new CompaniesViewModel(
     companiesService,
     setIsLoading,
-    setCompanies,
+
+    (newCompanies) => setCompanies([...newCompanies]),
     companies,
   )
 

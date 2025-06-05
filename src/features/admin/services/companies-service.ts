@@ -1,4 +1,4 @@
-// src/features/admin/services/companies-service.ts
+// src/features/admin/services/companies-service.ts - CORRIGIDO
 import {
   CREATE_COMPANY_MUTATION,
   DELETE_COMPANY_MUTATION,
@@ -47,13 +47,6 @@ export class CompaniesService {
       return data.createCompany as Company
     } catch (error) {
       console.error('Create company error:', error)
-      //   // Log detalhado do erro para debugging
-      //   if (error?.graphQLErrors?.length > 0) {
-      //     console.error('GraphQL errors:', error.graphQLErrors)
-      //   }
-      //   if (error?.networkError) {
-      //     console.error('Network error:', error.networkError)
-      //   }
       throw error
     }
   }
@@ -91,13 +84,6 @@ export class CompaniesService {
       return data.updateCompany as Company
     } catch (error) {
       console.error('Update company error:', error)
-      // Log detalhado do erro para debugging
-      //   if (error?.graphQLErrors?.length > 0) {
-      //     console.error('GraphQL errors:', error.graphQLErrors)
-      //   }
-      //   if (error?.networkError) {
-      //     console.error('Network error:', error.networkError)
-      //   }
       throw error
     }
   }
@@ -115,15 +101,18 @@ export class CompaniesService {
     }
   }
 
+  // CORREÇÃO: Não usar estrutura edges/node
   async getCompanies(): Promise<Array<Company>> {
     try {
       const { data } = await apolloClient.query({
         query: GET_COMPANIES_QUERY,
+        fetchPolicy: 'cache-first',
       })
 
-      return data.companies.edges.map(
-        (edge: any) => edge.node,
-      ) as Array<Company>
+      console.log('Companies data received:', data)
+
+      // CORREÇÃO: Retornar diretamente o array de companies
+      return data.companies as Array<Company>
     } catch (error) {
       console.error('Get companies error:', error)
       throw error
