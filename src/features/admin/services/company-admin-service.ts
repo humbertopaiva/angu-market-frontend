@@ -3,7 +3,10 @@ import {
   GET_AVAILABLE_COMPANY_ADMINS_QUERY,
   REMOVE_COMPANY_ADMIN_MUTATION,
 } from './company-admin-queries'
-import { GET_COMPANIES_QUERY } from './companies-queries'
+import {
+  GET_COMPANIES_QUERY,
+  GET_COMPANY_WITH_USERS_QUERY,
+} from './companies-queries'
 import type { Company, User } from '@/types/graphql'
 import { RoleType } from '@/types/graphql'
 import { apolloClient } from '@/infra/graphql/apollo-client'
@@ -116,8 +119,18 @@ export class CompanyAdminService {
    * Verificar se usuário já é admin de alguma empresa
    */
   isCompanyAdmin(user: User): boolean {
-    const userRoles = user.userRoles?.map((ur) => ur.role.name) || []
-    return userRoles.includes(RoleType.COMPANY_ADMIN)
+    if (!user.userRoles || user.userRoles.length === 0) {
+      console.debug('User has no roles:', user.name, user.id)
+      return false
+    }
+
+    const userRoles = user.userRoles.map((ur) => ur.role.name)
+    console.debug('User roles for', user.name, ':', userRoles)
+
+    const isAdmin = userRoles.includes(RoleType.COMPANY_ADMIN)
+    console.debug('Is company admin:', isAdmin)
+
+    return isAdmin
   }
 
   /**
@@ -139,7 +152,25 @@ export class CompanyAdminService {
     canBeAdmin: boolean
     currentCompany?: string
   } {
-    const userRoles = user.userRoles?.map((ur) => ur.role.name) || []
+    console.debug('=== FORMAT USER STATUS DEBUG ===')
+    console.debug('User:', user.name, 'ID:', user.id)
+    console.debug('User roles count:', user.userRoles?.length || 0)
+
+    if (!user.userRoles || user.userRoles.length === 0) {
+      console.debug('User has no roles, defaulting to public user')
+      return {
+        label: 'Sem função definida',
+        color: 'gray',
+        canBeAdmin: true,
+      }
+    }
+
+    const userRoles = user.userRoles.map((ur) => {
+      console.debug('Role object:', ur.role)
+      return ur.role.name
+    })
+
+    console.debug('User roles:', userRoles)
 
     if (userRoles.includes(RoleType.SUPER_ADMIN)) {
       return {
@@ -186,24 +217,85 @@ export class CompanyAdminService {
    * Buscar admins atuais de uma empresa
    */
   getCompanyAdmins(company: Company): Array<User> {
-    if (!company.users) return []
+    console.debug('=== GET COMPANY ADMINS DEBUG START ===')
+    console.debug('Company:', company.name, 'ID:', company.id)
+    console.debug('Company users count:', company.users?.length || 0)
 
-    return company.users.filter((user) => {
-      const userRoles = user.userRoles?.map((ur) => ur.role.name) || []
-      return userRoles.includes(RoleType.COMPANY_ADMIN)
+    if (!company.users || company.users.length === 0) {
+      console.debug('No users found for company')
+      return []
+    }
+
+    const admins = company.users.filter((user) => {
+      console.debug('Checking user:', user.name, 'ID:', user.id)
+      console.debug('User roles count:', user.userRoles?.length || 0)
+
+      if (!user.userRoles || user.userRoles.length === 0) {
+        console.debug('User has no roles')
+        return false
+      }
+
+      const userRoles = user.userRoles.map((ur) => {
+        console.debug('Role:', ur.role.name)
+        return ur.role.name
+      })
+
+      console.debug('User roles:', userRoles)
+
+      const isAdmin = userRoles.includes(RoleType.COMPANY_ADMIN)
+      console.debug('Is admin:', isAdmin)
+
+      return isAdmin
     })
+
+    console.debug(
+      'Found admins:',
+      admins.map((a) => ({ name: a.name, id: a.id })),
+    )
+    console.debug('=== GET COMPANY ADMINS DEBUG END ===')
+
+    return admins
   }
 
   /**
    * Buscar funcionários de uma empresa
    */
   getCompanyStaff(company: Company): Array<User> {
-    if (!company.users) return []
+    console.debug('=== GET COMPANY STAFF DEBUG START ===')
+    console.debug('Company:', company.name)
 
-    return company.users.filter((user) => {
-      const userRoles = user.userRoles?.map((ur) => ur.role.name) || []
-      return userRoles.includes(RoleType.COMPANY_STAFF)
+    if (!company.users || company.users.length === 0) {
+      console.debug('No users found for company staff')
+      return []
+    }
+
+    const staff = company.users.filter((user) => {
+      if (!user.userRoles || user.userRoles.length === 0) {
+        return false
+      }
+
+      const userRoles = user.userRoles.map((ur) => ur.role.name)
+      const isStaff = userRoles.includes(RoleType.COMPANY_STAFF)
+
+      console.debug(
+        'User:',
+        user.name,
+        'roles:',
+        userRoles,
+        'isStaff:',
+        isStaff,
+      )
+
+      return isStaff
     })
+
+    console.debug(
+      'Found staff:',
+      staff.map((s) => ({ name: s.name, id: s.id })),
+    )
+    console.debug('=== GET COMPANY STAFF DEBUG END ===')
+
+    return staff
   }
 
   /**
@@ -229,5 +321,39 @@ export class CompanyAdminService {
     }
 
     return errors
+  }
+
+  /**
+   * Buscar empresa com detalhes completos dos usuários
+   * Específico para gestão de admins
+   */
+  async getCompanyWithUsersDetails(id: number): Promise<Company> {
+    try {
+      console.log('Getting company with users details for ID:', id)
+
+      const { data } = await apolloClient.query({
+        query: GET_COMPANY_WITH_USERS_QUERY,
+        variables: { id },
+        fetchPolicy: 'network-only', // Sempre buscar dados frescos
+      })
+
+      console.log('Company with users details received:', {
+        id: data.companyDetails.id,
+        name: data.companyDetails.name,
+        usersCount: data.companyDetails.users?.length || 0,
+        users:
+          data.companyDetails.users?.map((user: any) => ({
+            id: user.id,
+            name: user.name,
+            rolesCount: user.userRoles?.length || 0,
+            roles: user.userRoles?.map((ur: any) => ur.role?.name) || [],
+          })) || [],
+      })
+
+      return data.companyDetails as Company
+    } catch (error) {
+      console.error('Get company with users details error:', error)
+      throw error
+    }
   }
 }

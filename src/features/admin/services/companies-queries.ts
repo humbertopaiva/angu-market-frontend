@@ -26,6 +26,22 @@ export const CREATE_COMPANY_MUTATION = gql`
         city
         state
       }
+      users {
+        id
+        uuid
+        name
+        email
+        phone
+        isActive
+        userRoles {
+          id
+          role {
+            id
+            name
+            description
+          }
+        }
+      }
       isActive
       createdAt
       updatedAt
@@ -108,6 +124,22 @@ export const UPDATE_COMPANY_MUTATION = gql`
         city
         state
       }
+      users {
+        id
+        uuid
+        name
+        email
+        phone
+        isActive
+        userRoles {
+          id
+          role {
+            id
+            name
+            description
+          }
+        }
+      }
       isActive
       createdAt
       updatedAt
@@ -121,7 +153,7 @@ export const DELETE_COMPANY_MUTATION = gql`
   }
 `
 
-// CORREÇÃO: Query simples sem estrutura edges/node
+// CORREÇÃO: Query principal das empresas com usuários e roles completos
 export const GET_COMPANIES_QUERY = gql`
   query GetCompanies {
     companies {
@@ -146,6 +178,25 @@ export const GET_COMPANIES_QUERY = gql`
         name
         city
         state
+      }
+      users {
+        id
+        uuid
+        name
+        email
+        phone
+        avatar
+        isActive
+        isVerified
+        companyId
+        userRoles {
+          id
+          role {
+            id
+            name
+            description
+          }
+        }
       }
       isActive
       createdAt
@@ -179,6 +230,25 @@ export const GET_COMPANY_BY_ID_QUERY = gql`
         city
         state
       }
+      users {
+        id
+        uuid
+        name
+        email
+        phone
+        avatar
+        isActive
+        isVerified
+        companyId
+        userRoles {
+          id
+          role {
+            id
+            name
+            description
+          }
+        }
+      }
       isActive
       createdAt
       updatedAt
@@ -210,6 +280,82 @@ export const GET_COMPANIES_BY_PLACE_QUERY = gql`
         name
         city
         state
+      }
+      users {
+        id
+        uuid
+        name
+        email
+        phone
+        avatar
+        isActive
+        isVerified
+        companyId
+        userRoles {
+          id
+          role {
+            id
+            name
+            description
+          }
+        }
+      }
+      isActive
+      createdAt
+      updatedAt
+    }
+  }
+`
+
+// ADIÇÃO: Query específica para obter empresa com detalhes completos dos usuários
+export const GET_COMPANY_WITH_USERS_QUERY = gql`
+  query GetCompanyWithUsers($id: Int!) {
+    companyDetails(id: $id) {
+      id
+      uuid
+      name
+      slug
+      description
+      phone
+      email
+      website
+      address
+      latitude
+      longitude
+      openingHours
+      logo
+      banner
+      cnpj
+      placeId
+      place {
+        id
+        name
+        city
+        state
+      }
+      users {
+        id
+        uuid
+        name
+        email
+        phone
+        avatar
+        isActive
+        isVerified
+        companyId
+        company {
+          id
+          name
+        }
+        userRoles {
+          id
+          isActive
+          role {
+            id
+            name
+            description
+          }
+        }
       }
       isActive
       createdAt

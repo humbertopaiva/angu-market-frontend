@@ -22,6 +22,7 @@ import { useCompaniesViewModel } from '../viewmodel/companies-viewmodel'
 import { usePlacesViewModel } from '../viewmodel/places-viewmodel'
 
 import type { Company } from '@/types/graphql'
+import { RoleType } from '@/types/graphql'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -197,16 +198,58 @@ export function CompaniesView() {
     }
   }
 
-  // NOVO: Função para obter admins da empresa
   const getCompanyAdmins = (company: Company): string => {
-    if (!company.users) return 'Sem admin'
+    console.debug('=== GET COMPANY ADMINS IN VIEW DEBUG ===')
+    console.debug('Company:', company.name, 'ID:', company.id)
+    console.debug('Users count:', company.users?.length || 0)
 
-    const admins = company.users.filter((user) =>
-      user.userRoles?.some((ur) => ur.role.name === 'COMPANY_ADMIN'),
+    if (!company.users || company.users.length === 0) {
+      console.debug('No users found')
+      return 'Sem admin'
+    }
+
+    console.debug('Checking users for admin roles...')
+
+    const admins = company.users.filter((user) => {
+      console.debug('User:', user.name, 'ID:', user.id)
+      console.debug('User roles count:', user.userRoles?.length || 0)
+
+      if (!user.userRoles || user.userRoles.length === 0) {
+        console.debug('User has no roles')
+        return false
+      }
+
+      const roles = user.userRoles
+        .map((ur) => {
+          console.debug('Role object:', ur.role)
+          return ur.role.name
+        })
+        .filter(Boolean)
+
+      console.debug('User roles:', roles)
+
+      const isAdmin = roles.includes(RoleType.COMPANY_ADMIN)
+      console.debug('Is admin:', isAdmin)
+
+      return isAdmin
+    })
+
+    console.debug(
+      'Found admins:',
+      admins.map((a) => ({ name: a.name, id: a.id })),
     )
 
-    if (admins.length === 0) return 'Sem admin'
-    if (admins.length === 1) return admins[0].name
+    if (admins.length === 0) {
+      console.debug('No admins found')
+      return 'Sem admin'
+    }
+
+    if (admins.length === 1) {
+      console.debug('One admin found:', admins[0].name)
+      return admins[0].name
+    }
+
+    console.debug('Multiple admins found:', admins.length)
     return `${admins[0].name} +${admins.length - 1}`
   }
 

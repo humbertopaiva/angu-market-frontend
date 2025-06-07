@@ -17,6 +17,7 @@ import {
   Users,
 } from 'lucide-react'
 import { useCompanyAdminViewModel } from '../viewmodel/company-admin-viewmodel'
+import { CompaniesService } from '../services/companies-service'
 import type { Company, User as UserType } from '@/types/graphql'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -54,7 +55,7 @@ interface CompanyAdminManagerProps {
 }
 
 export function CompanyAdminManager({
-  company,
+  company: initialCompany,
   placeId,
   onCompanyUpdate,
 }: CompanyAdminManagerProps) {
@@ -63,9 +64,42 @@ export function CompanyAdminManager({
   const [selectedUserId, setSelectedUserId] = useState<string>('')
   const [isAssignDialogOpen, setIsAssignDialogOpen] = useState(false)
 
+  const [company, setCompany] = useState<Company>(initialCompany)
+  const [loadingCompanyDetails, setLoadingCompanyDetails] = useState(false)
+
+  const companiesService = new CompaniesService()
+
   useEffect(() => {
+    const loadCompanyDetails = async () => {
+      try {
+        setLoadingCompanyDetails(true)
+        console.log('Loading company details for company:', initialCompany.id)
+
+        // Buscar empresa com detalhes completos dos usuários
+        const companyWithDetails =
+          await companiesService.getCompanyWithUsersDetails(
+            Number(initialCompany.id),
+          )
+
+        console.log('Company details loaded:', {
+          id: companyWithDetails.id,
+          name: companyWithDetails.name,
+          usersCount: companyWithDetails.users?.length || 0,
+        })
+
+        setCompany(companyWithDetails)
+      } catch (error) {
+        console.error('Error loading company details:', error)
+        // Fallback para a empresa inicial se houver erro
+        setCompany(initialCompany)
+      } finally {
+        setLoadingCompanyDetails(false)
+      }
+    }
+
+    loadCompanyDetails()
     viewModel.loadAvailableUsers(placeId)
-  }, [placeId])
+  }, [placeId, initialCompany.id])
 
   const currentAdmins = viewModel.getCompanyAdmins(company)
   const currentStaff = viewModel.getCompanyStaff(company)
@@ -139,6 +173,29 @@ export function CompanyAdminManager({
         {status.label}
       </span>
     )
+  }
+
+  const handleCompanyUpdate = async (updatedCompany: Company) => {
+    console.log('Company updated, refreshing details...')
+
+    try {
+      // Recarregar detalhes da empresa
+      const companyWithDetails =
+        await companiesService.getCompanyWithUsersDetails(
+          Number(updatedCompany.id),
+        )
+      setCompany(companyWithDetails)
+
+      // Recarregar usuários disponíveis
+      viewModel.loadAvailableUsers(placeId)
+
+      // Notificar componente pai se necessário
+      if (onCompanyUpdate) {
+        onCompanyUpdate(companyWithDetails)
+      }
+    } catch (error) {
+      console.error('Error refreshing company details:', error)
+    }
   }
 
   return (

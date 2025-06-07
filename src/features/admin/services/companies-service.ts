@@ -7,6 +7,7 @@ import {
   GET_COMPANIES_BY_PLACE_QUERY,
   GET_COMPANIES_QUERY,
   GET_COMPANY_BY_ID_QUERY,
+  GET_COMPANY_WITH_USERS_QUERY,
   UPDATE_COMPANY_MUTATION,
 } from './companies-queries'
 import type {
@@ -535,6 +536,40 @@ export class CompaniesService {
       return stats
     } catch (error) {
       console.error('Error getting companies stats:', error)
+      throw error
+    }
+  }
+
+  /**
+   * Buscar empresa com detalhes completos dos usuários
+   * Específico para gestão de admins
+   */
+  async getCompanyWithUsersDetails(id: number): Promise<Company> {
+    try {
+      console.log('Getting company with users details for ID:', id)
+
+      const { data } = await apolloClient.query({
+        query: GET_COMPANY_WITH_USERS_QUERY,
+        variables: { id },
+        fetchPolicy: 'network-only', // Sempre buscar dados frescos
+      })
+
+      console.log('Company with users details received:', {
+        id: data.companyDetails.id,
+        name: data.companyDetails.name,
+        usersCount: data.companyDetails.users?.length || 0,
+        users:
+          data.companyDetails.users?.map((user: any) => ({
+            id: user.id,
+            name: user.name,
+            rolesCount: user.userRoles?.length || 0,
+            roles: user.userRoles?.map((ur: any) => ur.role?.name) || [],
+          })) || [],
+      })
+
+      return data.companyDetails as Company
+    } catch (error) {
+      console.error('Get company with users details error:', error)
       throw error
     }
   }
