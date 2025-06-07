@@ -23,11 +23,6 @@ export const CREATE_SEGMENT_MUTATION = gql`
         id
         name
         slug
-        subcategories {
-          id
-          name
-          slug
-        }
       }
       isActive
       createdAt
@@ -58,11 +53,6 @@ export const UPDATE_SEGMENT_MUTATION = gql`
         id
         name
         slug
-        subcategories {
-          id
-          name
-          slug
-        }
       }
       isActive
       createdAt
@@ -80,7 +70,6 @@ export const DELETE_SEGMENT_MUTATION = gql`
   }
 `
 
-// CORREÇÃO: Query principal sem edges wrapper
 export const GET_SEGMENTS_QUERY = gql`
   query GetSegments {
     segments {
@@ -103,13 +92,6 @@ export const GET_SEGMENTS_QUERY = gql`
         id
         name
         slug
-        order
-        subcategories {
-          id
-          name
-          slug
-          order
-        }
       }
       isActive
       createdAt
@@ -140,13 +122,6 @@ export const GET_SEGMENT_BY_ID_QUERY = gql`
         id
         name
         slug
-        order
-        subcategories {
-          id
-          name
-          slug
-          order
-        }
       }
       isActive
       createdAt
@@ -177,13 +152,6 @@ export const GET_SEGMENTS_BY_PLACE_QUERY = gql`
         id
         name
         slug
-        order
-        subcategories {
-          id
-          name
-          slug
-          order
-        }
       }
       isActive
       createdAt
@@ -192,9 +160,10 @@ export const GET_SEGMENTS_BY_PLACE_QUERY = gql`
   }
 `
 
-export const GET_SEGMENT_BY_SLUG_QUERY = gql`
-  query GetSegmentBySlug($slug: String!, $placeId: Int!) {
-    segmentBySlug(slug: $slug, placeId: $placeId) {
+// Queries para categorias
+export const GET_CATEGORIES_QUERY = gql`
+  query GetCategories {
+    categories {
       id
       uuid
       name
@@ -203,6 +172,7 @@ export const GET_SEGMENT_BY_SLUG_QUERY = gql`
       icon
       color
       order
+      keywords
       placeId
       place {
         id
@@ -210,17 +180,138 @@ export const GET_SEGMENT_BY_SLUG_QUERY = gql`
         city
         state
       }
-      categories {
+      segments {
         id
         name
         slug
-        order
-        subcategories {
-          id
-          name
-          slug
-          order
-        }
+        color
+      }
+      subcategories {
+        id
+        name
+        slug
+      }
+      companies {
+        id
+        name
+        slug
+      }
+      isActive
+      createdAt
+      updatedAt
+    }
+  }
+`
+
+export const GET_CATEGORIES_BY_PLACE_QUERY = gql`
+  query GetCategoriesByPlace($placeId: Int!) {
+    categoriesByPlace(placeId: $placeId) {
+      id
+      uuid
+      name
+      slug
+      description
+      icon
+      color
+      order
+      keywords
+      placeId
+      place {
+        id
+        name
+        city
+        state
+      }
+      segments {
+        id
+        name
+        slug
+        color
+      }
+      subcategories {
+        id
+        name
+        slug
+      }
+      companies {
+        id
+        name
+        slug
+      }
+      isActive
+      createdAt
+      updatedAt
+    }
+  }
+`
+
+// Queries para subcategorias
+export const GET_SUBCATEGORIES_QUERY = gql`
+  query GetSubcategories {
+    subcategories {
+      id
+      uuid
+      name
+      slug
+      description
+      icon
+      order
+      keywords
+      placeId
+      categoryId
+      place {
+        id
+        name
+        city
+        state
+      }
+      category {
+        id
+        name
+        slug
+        color
+      }
+      companies {
+        id
+        name
+        slug
+      }
+      isActive
+      createdAt
+      updatedAt
+    }
+  }
+`
+
+export const GET_SUBCATEGORIES_BY_PLACE_QUERY = gql`
+  query GetSubcategoriesByPlace($placeId: Int!) {
+    subcategoriesByPlace(placeId: $placeId) {
+      id
+      uuid
+      name
+      slug
+      description
+      icon
+      order
+      keywords
+      placeId
+      categoryId
+      place {
+        id
+        name
+        city
+        state
+      }
+      category {
+        id
+        name
+        slug
+        color
+      }
+      companies {
+        id
+        name
+        slug
       }
       isActive
       createdAt
