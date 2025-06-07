@@ -210,16 +210,16 @@ export function CompaniesView() {
 
     console.debug('Checking users for admin roles...')
 
-    const admins = company.users.filter((user) => {
-      console.debug('User:', user.name, 'ID:', user.id)
-      console.debug('User roles count:', user.userRoles?.length || 0)
+    const admins = company.users.filter((companyUser) => {
+      console.debug('User:', companyUser.name, 'ID:', companyUser.id)
+      console.debug('User roles count:', companyUser.userRoles?.length || 0)
 
-      if (!user.userRoles || user.userRoles.length === 0) {
+      if (!companyUser.userRoles || companyUser.userRoles.length === 0) {
         console.debug('User has no roles')
         return false
       }
 
-      const roles = user.userRoles
+      const roles = companyUser.userRoles
         .map((ur) => {
           console.debug('Role object:', ur.role)
           return ur.role.name
