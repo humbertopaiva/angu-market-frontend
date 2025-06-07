@@ -22,8 +22,12 @@ import { Route as AuthLoginImport } from './routes/auth/login'
 import { Route as AuthForgotPasswordImport } from './routes/auth/forgot-password'
 import { Route as AuthCompanyLoginImport } from './routes/auth/company-login'
 import { Route as AdminUsersImport } from './routes/admin/users'
+import { Route as AdminSubcategoriesImport } from './routes/admin/subcategories'
+import { Route as AdminSegmentsImport } from './routes/admin/segments'
+import { Route as AdminSegmentationImport } from './routes/admin/segmentation'
 import { Route as AdminPlacesImport } from './routes/admin/places'
 import { Route as AdminCompaniesImport } from './routes/admin/companies'
+import { Route as AdminCategoriesImport } from './routes/admin/categories'
 import { Route as AuthVerifyEmailTokenImport } from './routes/auth/verify-email/$token'
 import { Route as AuthResetPasswordTokenImport } from './routes/auth/reset-password/$token'
 import { Route as AuthCompanyDashboardImport } from './routes/auth/company/dashboard'
@@ -96,6 +100,24 @@ const AdminUsersRoute = AdminUsersImport.update({
   getParentRoute: () => AdminRoute,
 } as any)
 
+const AdminSubcategoriesRoute = AdminSubcategoriesImport.update({
+  id: '/subcategories',
+  path: '/subcategories',
+  getParentRoute: () => AdminRoute,
+} as any)
+
+const AdminSegmentsRoute = AdminSegmentsImport.update({
+  id: '/segments',
+  path: '/segments',
+  getParentRoute: () => AdminRoute,
+} as any)
+
+const AdminSegmentationRoute = AdminSegmentationImport.update({
+  id: '/segmentation',
+  path: '/segmentation',
+  getParentRoute: () => AdminRoute,
+} as any)
+
 const AdminPlacesRoute = AdminPlacesImport.update({
   id: '/places',
   path: '/places',
@@ -105,6 +127,12 @@ const AdminPlacesRoute = AdminPlacesImport.update({
 const AdminCompaniesRoute = AdminCompaniesImport.update({
   id: '/companies',
   path: '/companies',
+  getParentRoute: () => AdminRoute,
+} as any)
+
+const AdminCategoriesRoute = AdminCategoriesImport.update({
+  id: '/categories',
+  path: '/categories',
   getParentRoute: () => AdminRoute,
 } as any)
 
@@ -158,6 +186,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardImport
       parentRoute: typeof rootRoute
     }
+    '/admin/categories': {
+      id: '/admin/categories'
+      path: '/categories'
+      fullPath: '/admin/categories'
+      preLoaderRoute: typeof AdminCategoriesImport
+      parentRoute: typeof AdminImport
+    }
     '/admin/companies': {
       id: '/admin/companies'
       path: '/companies'
@@ -170,6 +205,27 @@ declare module '@tanstack/react-router' {
       path: '/places'
       fullPath: '/admin/places'
       preLoaderRoute: typeof AdminPlacesImport
+      parentRoute: typeof AdminImport
+    }
+    '/admin/segmentation': {
+      id: '/admin/segmentation'
+      path: '/segmentation'
+      fullPath: '/admin/segmentation'
+      preLoaderRoute: typeof AdminSegmentationImport
+      parentRoute: typeof AdminImport
+    }
+    '/admin/segments': {
+      id: '/admin/segments'
+      path: '/segments'
+      fullPath: '/admin/segments'
+      preLoaderRoute: typeof AdminSegmentsImport
+      parentRoute: typeof AdminImport
+    }
+    '/admin/subcategories': {
+      id: '/admin/subcategories'
+      path: '/subcategories'
+      fullPath: '/admin/subcategories'
+      preLoaderRoute: typeof AdminSubcategoriesImport
       parentRoute: typeof AdminImport
     }
     '/admin/users': {
@@ -248,15 +304,23 @@ declare module '@tanstack/react-router' {
 // Create and export the route tree
 
 interface AdminRouteChildren {
+  AdminCategoriesRoute: typeof AdminCategoriesRoute
   AdminCompaniesRoute: typeof AdminCompaniesRoute
   AdminPlacesRoute: typeof AdminPlacesRoute
+  AdminSegmentationRoute: typeof AdminSegmentationRoute
+  AdminSegmentsRoute: typeof AdminSegmentsRoute
+  AdminSubcategoriesRoute: typeof AdminSubcategoriesRoute
   AdminUsersRoute: typeof AdminUsersRoute
   AdminIndexRoute: typeof AdminIndexRoute
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
+  AdminCategoriesRoute: AdminCategoriesRoute,
   AdminCompaniesRoute: AdminCompaniesRoute,
   AdminPlacesRoute: AdminPlacesRoute,
+  AdminSegmentationRoute: AdminSegmentationRoute,
+  AdminSegmentsRoute: AdminSegmentsRoute,
+  AdminSubcategoriesRoute: AdminSubcategoriesRoute,
   AdminUsersRoute: AdminUsersRoute,
   AdminIndexRoute: AdminIndexRoute,
 }
@@ -302,8 +366,12 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AdminRouteWithChildren
   '/auth': typeof AuthRouteWithChildren
   '/dashboard': typeof DashboardRoute
+  '/admin/categories': typeof AdminCategoriesRoute
   '/admin/companies': typeof AdminCompaniesRoute
   '/admin/places': typeof AdminPlacesRoute
+  '/admin/segmentation': typeof AdminSegmentationRoute
+  '/admin/segments': typeof AdminSegmentsRoute
+  '/admin/subcategories': typeof AdminSubcategoriesRoute
   '/admin/users': typeof AdminUsersRoute
   '/auth/company-login': typeof AuthCompanyLoginRoute
   '/auth/forgot-password': typeof AuthForgotPasswordRoute
@@ -320,8 +388,12 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRouteWithChildren
   '/dashboard': typeof DashboardRoute
+  '/admin/categories': typeof AdminCategoriesRoute
   '/admin/companies': typeof AdminCompaniesRoute
   '/admin/places': typeof AdminPlacesRoute
+  '/admin/segmentation': typeof AdminSegmentationRoute
+  '/admin/segments': typeof AdminSegmentsRoute
+  '/admin/subcategories': typeof AdminSubcategoriesRoute
   '/admin/users': typeof AdminUsersRoute
   '/auth/company-login': typeof AuthCompanyLoginRoute
   '/auth/forgot-password': typeof AuthForgotPasswordRoute
@@ -340,8 +412,12 @@ export interface FileRoutesById {
   '/admin': typeof AdminRouteWithChildren
   '/auth': typeof AuthRouteWithChildren
   '/dashboard': typeof DashboardRoute
+  '/admin/categories': typeof AdminCategoriesRoute
   '/admin/companies': typeof AdminCompaniesRoute
   '/admin/places': typeof AdminPlacesRoute
+  '/admin/segmentation': typeof AdminSegmentationRoute
+  '/admin/segments': typeof AdminSegmentsRoute
+  '/admin/subcategories': typeof AdminSubcategoriesRoute
   '/admin/users': typeof AdminUsersRoute
   '/auth/company-login': typeof AuthCompanyLoginRoute
   '/auth/forgot-password': typeof AuthForgotPasswordRoute
@@ -361,8 +437,12 @@ export interface FileRouteTypes {
     | '/admin'
     | '/auth'
     | '/dashboard'
+    | '/admin/categories'
     | '/admin/companies'
     | '/admin/places'
+    | '/admin/segmentation'
+    | '/admin/segments'
+    | '/admin/subcategories'
     | '/admin/users'
     | '/auth/company-login'
     | '/auth/forgot-password'
@@ -378,8 +458,12 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/dashboard'
+    | '/admin/categories'
     | '/admin/companies'
     | '/admin/places'
+    | '/admin/segmentation'
+    | '/admin/segments'
+    | '/admin/subcategories'
     | '/admin/users'
     | '/auth/company-login'
     | '/auth/forgot-password'
@@ -396,8 +480,12 @@ export interface FileRouteTypes {
     | '/admin'
     | '/auth'
     | '/dashboard'
+    | '/admin/categories'
     | '/admin/companies'
     | '/admin/places'
+    | '/admin/segmentation'
+    | '/admin/segments'
+    | '/admin/subcategories'
     | '/admin/users'
     | '/auth/company-login'
     | '/auth/forgot-password'
@@ -447,8 +535,12 @@ export const routeTree = rootRoute
     "/admin": {
       "filePath": "admin.tsx",
       "children": [
+        "/admin/categories",
         "/admin/companies",
         "/admin/places",
+        "/admin/segmentation",
+        "/admin/segments",
+        "/admin/subcategories",
         "/admin/users",
         "/admin/"
       ]
@@ -468,12 +560,28 @@ export const routeTree = rootRoute
     "/dashboard": {
       "filePath": "dashboard.tsx"
     },
+    "/admin/categories": {
+      "filePath": "admin/categories.tsx",
+      "parent": "/admin"
+    },
     "/admin/companies": {
       "filePath": "admin/companies.tsx",
       "parent": "/admin"
     },
     "/admin/places": {
       "filePath": "admin/places.tsx",
+      "parent": "/admin"
+    },
+    "/admin/segmentation": {
+      "filePath": "admin/segmentation.tsx",
+      "parent": "/admin"
+    },
+    "/admin/segments": {
+      "filePath": "admin/segments.tsx",
+      "parent": "/admin"
+    },
+    "/admin/subcategories": {
+      "filePath": "admin/subcategories.tsx",
       "parent": "/admin"
     },
     "/admin/users": {

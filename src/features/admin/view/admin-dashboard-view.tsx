@@ -4,11 +4,14 @@ import { Outlet, useLocation, useNavigate } from '@tanstack/react-router'
 import {
   Building,
   Building2,
+  FileText,
+  Folder,
   Home,
   LayoutDashboard,
   LogOut,
   Menu,
   Settings,
+  Tags,
   Users,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -61,6 +64,34 @@ const navigationItems = [
     requiresSuperAdmin: false,
     requiresPlaceAdmin: true,
   },
+  {
+    title: 'Segmentação',
+    href: '/admin/segmentation',
+    icon: Settings,
+    requiresSuperAdmin: false,
+    requiresPlaceAdmin: true,
+  },
+  {
+    title: 'Segmentos',
+    href: '/admin/segments',
+    icon: Tags,
+    requiresSuperAdmin: false,
+    requiresPlaceAdmin: true,
+  },
+  {
+    title: 'Categorias',
+    href: '/admin/categories',
+    icon: Folder,
+    requiresSuperAdmin: false,
+    requiresPlaceAdmin: true,
+  },
+  {
+    title: 'Subcategorias',
+    href: '/admin/subcategories',
+    icon: FileText,
+    requiresSuperAdmin: false,
+    requiresPlaceAdmin: true,
+  },
 ]
 
 export function AdminDashboardView() {
@@ -94,7 +125,7 @@ export function AdminDashboardView() {
     return location.pathname.startsWith(href)
   }
 
-  // CORREÇÃO: Filtrar itens de navegação baseado nas permissões do usuário
+  // Filtrar itens de navegação baseado nas permissões do usuário
   const visibleNavigationItems = navigationItems.filter((item) => {
     // Verificações específicas por funcionalidade
     if (item.href === '/admin/places' && !canManagePlaces(user)) {
@@ -109,6 +140,18 @@ export function AdminDashboardView() {
       return false
     }
 
+    // Segmentos, categorias e subcategorias: Super Admin ou Place Admin
+    if (
+      (item.href === '/admin/segmentation' ||
+        item.href === '/admin/segments' ||
+        item.href === '/admin/categories' ||
+        item.href === '/admin/subcategories') &&
+      !canManagePlaces(user) &&
+      !isPlaceAdmin(user)
+    ) {
+      return false
+    }
+
     // Se requer super admin e não é super admin
     if (item.requiresSuperAdmin && !isSuperAdmin(user)) {
       return false
@@ -117,7 +160,7 @@ export function AdminDashboardView() {
     return true
   })
 
-  // CORREÇÃO: Determinar título do painel baseado no tipo de usuário
+  // Determinar título do painel baseado no tipo de usuário
   const getPanelTitle = () => {
     if (!user) {
       return ''
@@ -184,7 +227,6 @@ export function AdminDashboardView() {
                   <p className="text-xs leading-none text-muted-foreground">
                     {user.email}
                   </p>
-                  {/* ADIÇÃO: Mostrar tipo de admin */}
                   <p className="text-xs leading-none text-blue-600 font-medium">
                     {isSuperAdmin(user)
                       ? 'Super Admin'
