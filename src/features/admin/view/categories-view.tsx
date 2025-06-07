@@ -315,30 +315,20 @@ export function CategoriesView() {
                     {category.description}
                   </p>
 
-                  {/* Segmentos da categoria */}
+                  {/* MUDANÇA: Mostrar o segmento principal (primeiro da lista) */}
                   {category.segments && category.segments.length > 0 && (
                     <div className="flex items-center gap-2 text-sm text-gray-600">
                       <Tags className="h-4 w-4" />
-                      <span>Segmentos:</span>
-                      <div className="flex gap-1">
-                        {category.segments.slice(0, 2).map((segment) => (
-                          <span
-                            key={segment.id}
-                            className="inline-flex items-center px-1.5 py-0.5 rounded text-xs"
-                            style={{
-                              backgroundColor: segment.color || '#6B7280',
-                              color: 'white',
-                            }}
-                          >
-                            {segment.name}
-                          </span>
-                        ))}
-                        {category.segments.length > 2 && (
-                          <span className="text-xs text-gray-500">
-                            +{category.segments.length - 2}
-                          </span>
-                        )}
-                      </div>
+                      <span>Segmento:</span>
+                      <span
+                        className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium text-white"
+                        style={{
+                          backgroundColor:
+                            category.segments[0].color || '#6B7280',
+                        }}
+                      >
+                        {category.segments[0].name}
+                      </span>
                     </div>
                   )}
 

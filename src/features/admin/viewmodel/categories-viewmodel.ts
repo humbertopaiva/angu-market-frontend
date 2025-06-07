@@ -275,6 +275,11 @@ export class CategoriesViewModel {
       errors.push('Place é obrigatório')
     }
 
+    // MUDANÇA: Validar segmento único
+    if (!data.segmentIds || data.segmentIds.length === 0) {
+      errors.push('Segmento é obrigatório')
+    }
+
     if (data.color && !/^#[0-9A-F]{6}$/i.test(data.color)) {
       errors.push('Cor deve ser um código hexadecimal válido')
     }
@@ -339,7 +344,7 @@ export class CategoriesViewModel {
         }
       }
 
-      // Filtro por segmento
+      // MUDANÇA: Filtro por segmento - verificar o primeiro (principal) segmento
       if (filters.segmentId) {
         const belongsToSegment = category.segments?.some(
           (segment) => segment.id === filters.segmentId,
@@ -380,7 +385,7 @@ export class CategoriesViewModel {
   }
 
   /**
-   * Agrupar categorias por segmento
+   * MUDANÇA: Agrupar categorias por segmento - simplificado para segmento único
    */
   groupCategoriesBySegment(
     categories: Array<Category>,
@@ -388,23 +393,13 @@ export class CategoriesViewModel {
     const groups: Record<string, Array<Category>> = {}
 
     categories.forEach((category) => {
-      if (category.segments && category.segments.length > 0) {
-        category.segments.forEach((segment) => {
-          const segmentName = segment.name || 'Sem segmento'
-          groups[segmentName] = []
+      // MUDANÇA: usar apenas o primeiro segmento (principal)
+      const primarySegment = category.segments?.[0]
+      const segmentName = primarySegment?.name || 'Sem segmento'
 
-          // Evitar duplicatas
-          if (!groups[segmentName].find((cat) => cat.id === category.id)) {
-            groups[segmentName].push(category)
-          }
-        })
-      } else {
-        const noSegmentKey = 'Sem segmento'
+      groups[segmentName] = []
 
-        groups[noSegmentKey] = []
-
-        groups[noSegmentKey].push(category)
-      }
+      groups[segmentName].push(category)
     })
 
     // Ordenar categorias dentro de cada grupo
@@ -439,6 +434,29 @@ export class CategoriesViewModel {
         bySegment: {},
       }
     }
+  }
+
+  /**
+   * MUDANÇA: Obter segmento principal de uma categoria
+   */
+  getPrimarySegment(category: Category): Segment | null {
+    return category.segments?.[0] || null
+  }
+
+  /**
+   * MUDANÇA: Verificar se categoria tem segmento
+   */
+  hasSegment(category: Category): boolean {
+    return !!(category.segments && category.segments.length > 0)
+  }
+
+  /**
+   * MUDANÇA: Filtrar categorias por segmento específico
+   */
+  getCategoriesForSegment(segmentId: string): Array<Category> {
+    return this.categories.filter((category) =>
+      category.segments?.some((segment) => segment.id === segmentId),
+    )
   }
 
   private getErrorMessage(error: any): string {

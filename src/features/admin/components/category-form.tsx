@@ -27,7 +27,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Checkbox } from '@/components/ui/checkbox'
 
 const categorySchema = z.object({
   name: z
@@ -43,6 +42,7 @@ const categorySchema = z.object({
     ),
   description: z.string().min(1, 'Descrição é obrigatória'),
   placeId: z.number().min(1, 'Place é obrigatório'),
+  segmentId: z.number().min(1, 'Segmento é obrigatório'), // MUDANÇA: agora é obrigatório
   icon: z.string().optional(),
   color: z
     .string()
@@ -53,7 +53,6 @@ const categorySchema = z.object({
     .min(0, 'Ordem deve ser maior ou igual a zero')
     .optional(),
   keywords: z.string().optional(),
-  segmentIds: z.array(z.number()).optional(),
   isActive: z.boolean().optional(),
 })
 
@@ -115,9 +114,6 @@ export function CategoryForm({
   isLoading,
 }: CategoryFormProps) {
   const isEditing = !!category
-  const [selectedSegmentIds, setSelectedSegmentIds] = React.useState<
-    Array<number>
-  >([])
 
   const {
     register,
@@ -133,45 +129,45 @@ export function CategoryForm({
       isActive: true,
       order: 0,
       color: '#22C55E',
-      segmentIds: [],
     },
   })
 
   const watchedName = watch('name')
   const watchedColor = watch('color')
   const selectedPlaceId = watch('placeId')
+  const selectedSegmentId = watch('segmentId')
   const selectedIcon = watch('icon')
 
   React.useEffect(() => {
     if (isOpen && category) {
-      const categorySegmentIds =
-        category.segments?.map((s) => Number(s.id)) || []
-      setSelectedSegmentIds(categorySegmentIds)
+      // MUDANÇA: pegar o primeiro segmento da categoria como segmento principal
+      const primarySegmentId = category.segments?.[0]?.id
+        ? Number(category.segments[0].id)
+        : undefined
 
       reset({
         name: category.name,
         slug: category.slug,
         description: category.description,
         placeId: Number(category.placeId),
+        segmentId: primarySegmentId, // MUDANÇA: usar segmento único
         icon: category.icon || undefined,
         color: category.color || '#22C55E',
         order: category.order || 0,
         keywords: category.keywords || undefined,
-        segmentIds: categorySegmentIds,
         isActive: category.isActive,
       })
     } else if (isOpen && !category) {
-      setSelectedSegmentIds([])
       reset({
         name: '',
         slug: '',
         description: '',
         placeId: undefined as any,
+        segmentId: undefined as any, // MUDANÇA: campo único
         icon: undefined,
         color: '#22C55E',
         order: 0,
         keywords: undefined,
-        segmentIds: [],
         isActive: true,
       })
     }
@@ -202,26 +198,16 @@ export function CategoryForm({
     )
   }, [segments, selectedPlaceId])
 
-  // Atualizar segmentos selecionados quando place mudar
+  // Resetar segmento quando place mudar
   React.useEffect(() => {
     if (selectedPlaceId && !isEditing) {
-      setSelectedSegmentIds([])
-      setValue('segmentIds', [])
+      setValue('segmentId', undefined as any)
     }
   }, [selectedPlaceId, isEditing, setValue])
 
-  const handleSegmentToggle = (segmentId: number, checked: boolean) => {
-    let newSelectedIds: Array<number>
-
-    if (checked) {
-      newSelectedIds = [...selectedSegmentIds, segmentId]
-    } else {
-      newSelectedIds = selectedSegmentIds.filter((id) => id !== segmentId)
-    }
-
-    setSelectedSegmentIds(newSelectedIds)
-    setValue('segmentIds', newSelectedIds)
-  }
+  const selectedSegment = availableSegments.find(
+    (seg) => Number(seg.id) === selectedSegmentId,
+  )
 
   const handleFormSubmit = async (data: CategoryFormData) => {
     try {
@@ -230,10 +216,9 @@ export function CategoryForm({
         slug: data.slug.trim(),
         description: data.description.trim(),
         placeId: data.placeId,
+        segmentIds: [data.segmentId], // MUDANÇA: enviar como array com um único item
         isActive: data.isActive ?? true,
         order: data.order || 0,
-        segmentIds:
-          selectedSegmentIds.length > 0 ? selectedSegmentIds : undefined,
       }
 
       if (data.icon && data.icon.trim()) {
@@ -344,71 +329,122 @@ export function CategoryForm({
             )}
           </div>
 
-          <div className="space-y-2">
-            <Label className="text-sm font-medium">Place *</Label>
-            <Select
-              value={selectedPlaceId ? selectedPlaceId.toString() : undefined}
-              onValueChange={(value) => setValue('placeId', Number(value))}
-              disabled={isLoading || places.length === 0}
-            >
-              <SelectTrigger>
-                <SelectValue
-                  placeholder={
-                    places.length === 0
-                      ? 'Nenhum place disponível'
-                      : 'Selecione um place'
-                  }
-                />
-              </SelectTrigger>
-              <SelectContent>
-                {places.length === 0 ? (
-                  <SelectItem value="no-places" disabled>
-                    Nenhum place disponível
-                  </SelectItem>
-                ) : (
-                  places.map((place) => (
-                    <SelectItem key={place.id} value={place.id}>
-                      {place.name} - {place.city}, {place.state}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">Place *</Label>
+              <Select
+                value={selectedPlaceId ? selectedPlaceId.toString() : undefined}
+                onValueChange={(value) => setValue('placeId', Number(value))}
+                disabled={isLoading || places.length === 0}
+              >
+                <SelectTrigger>
+                  <SelectValue
+                    placeholder={
+                      places.length === 0
+                        ? 'Nenhum place disponível'
+                        : 'Selecione um place'
+                    }
+                  />
+                </SelectTrigger>
+                <SelectContent>
+                  {places.length === 0 ? (
+                    <SelectItem value="no-places" disabled>
+                      Nenhum place disponível
                     </SelectItem>
-                  ))
-                )}
-              </SelectContent>
-            </Select>
-            {errors.placeId && (
-              <p className="text-sm text-red-600">{errors.placeId.message}</p>
-            )}
+                  ) : (
+                    places.map((place) => (
+                      <SelectItem key={place.id} value={place.id}>
+                        {place.name} - {place.city}, {place.state}
+                      </SelectItem>
+                    ))
+                  )}
+                </SelectContent>
+              </Select>
+              {errors.placeId && (
+                <p className="text-sm text-red-600">{errors.placeId.message}</p>
+              )}
+            </div>
+
+            {/* MUDANÇA: Segmento obrigatório como select simples */}
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">Segmento *</Label>
+              <Select
+                value={
+                  selectedSegmentId ? selectedSegmentId.toString() : undefined
+                }
+                onValueChange={(value) => setValue('segmentId', Number(value))}
+                disabled={isLoading || availableSegments.length === 0}
+              >
+                <SelectTrigger>
+                  <SelectValue
+                    placeholder={
+                      !selectedPlaceId
+                        ? 'Selecione um place primeiro'
+                        : availableSegments.length === 0
+                          ? 'Nenhum segmento disponível'
+                          : 'Selecione um segmento'
+                    }
+                  />
+                </SelectTrigger>
+                <SelectContent>
+                  {availableSegments.length === 0 ? (
+                    <SelectItem value="no-segments" disabled>
+                      {!selectedPlaceId
+                        ? 'Selecione um place primeiro'
+                        : 'Nenhum segmento disponível'}
+                    </SelectItem>
+                  ) : (
+                    availableSegments.map((segment) => (
+                      <SelectItem key={segment.id} value={segment.id}>
+                        <div className="flex items-center gap-2">
+                          <div
+                            className="w-3 h-3 rounded"
+                            style={{
+                              backgroundColor: segment.color || '#6B7280',
+                            }}
+                          />
+                          {segment.name}
+                        </div>
+                      </SelectItem>
+                    ))
+                  )}
+                </SelectContent>
+              </Select>
+              {errors.segmentId && (
+                <p className="text-sm text-red-600">
+                  {errors.segmentId.message}
+                </p>
+              )}
+              {!selectedPlaceId && (
+                <p className="text-xs text-amber-600">
+                  Selecione um place para ver os segmentos disponíveis.
+                </p>
+              )}
+              {selectedPlaceId && availableSegments.length === 0 && (
+                <p className="text-xs text-amber-600">
+                  Nenhum segmento encontrado para este place. Crie um segmento
+                  primeiro.
+                </p>
+              )}
+            </div>
           </div>
 
-          {/* Segmentos - só mostra se tem place selecionado */}
-          {selectedPlaceId && availableSegments.length > 0 && (
-            <div className="space-y-2">
-              <Label className="text-sm font-medium">
-                Segmentos (Opcional)
-              </Label>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-2 max-h-32 overflow-y-auto border rounded-md p-3">
-                {availableSegments.map((segment) => (
-                  <div key={segment.id} className="flex items-center space-x-2">
-                    <Checkbox
-                      id={`segment-${segment.id}`}
-                      checked={selectedSegmentIds.includes(Number(segment.id))}
-                      onCheckedChange={(checked) =>
-                        handleSegmentToggle(
-                          Number(segment.id),
-                          checked as boolean,
-                        )
-                      }
-                    />
-                    <Label
-                      htmlFor={`segment-${segment.id}`}
-                      className="text-sm font-normal cursor-pointer"
-                    >
-                      {segment.name}
-                    </Label>
-                  </div>
-                ))}
+          {/* Mostrar informações do segmento selecionado */}
+          {selectedSegment && (
+            <div className="p-3 bg-gray-50 rounded-md border">
+              <div className="flex items-center gap-2 mb-2">
+                <div
+                  className="w-4 h-4 rounded"
+                  style={{
+                    backgroundColor: selectedSegment.color || '#6B7280',
+                  }}
+                />
+                <span className="font-medium text-sm">
+                  Segmento: {selectedSegment.name}
+                </span>
               </div>
-              <p className="text-xs text-gray-500">
-                Selecione os segmentos aos quais esta categoria pertence
+              <p className="text-xs text-gray-600">
+                {selectedSegment.description}
               </p>
             </div>
           )}
@@ -529,7 +565,13 @@ export function CategoryForm({
             </Button>
             <Button
               type="submit"
-              disabled={isLoading || !isValid || places.length === 0}
+              disabled={
+                isLoading ||
+                !isValid ||
+                places.length === 0 ||
+                !selectedPlaceId ||
+                availableSegments.length === 0
+              }
             >
               {isLoading ? (
                 <>
