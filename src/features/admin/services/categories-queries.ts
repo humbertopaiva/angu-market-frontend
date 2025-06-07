@@ -1,4 +1,4 @@
-// src/features/admin/services/categories-queries.ts
+// src/features/admin/services/categories-queries.ts - CORRIGIDO
 import { gql } from '@apollo/client'
 
 export const CREATE_CATEGORY_MUTATION = gql`
@@ -96,56 +96,53 @@ export const DELETE_CATEGORY_MUTATION = gql`
   }
 `
 
+// CORREÇÃO: Query principal sem edges wrapper
 export const GET_CATEGORIES_QUERY = gql`
   query GetCategories {
     categories {
-      edges {
-        node {
-          id
-          uuid
-          name
-          slug
-          description
-          icon
-          color
-          order
-          keywords
-          placeId
-          place {
-            id
-            name
-            city
-            state
-          }
-          segments {
-            id
-            name
-            slug
-            color
-            order
-          }
-          subcategories {
-            id
-            name
-            slug
-            order
-          }
-          companies {
-            id
-            name
-            slug
-          }
-          isActive
-          createdAt
-          updatedAt
-        }
+      id
+      uuid
+      name
+      slug
+      description
+      icon
+      color
+      order
+      keywords
+      placeId
+      place {
+        id
+        name
+        city
+        state
       }
+      segments {
+        id
+        name
+        slug
+        color
+        order
+      }
+      subcategories {
+        id
+        name
+        slug
+        order
+      }
+      companies {
+        id
+        name
+        slug
+      }
+      isActive
+      createdAt
+      updatedAt
     }
   }
 `
 
 export const GET_CATEGORY_BY_ID_QUERY = gql`
-  query GetCategory($id: ID!) {
+  query GetCategory($id: Int!) {
     category(id: $id) {
       id
       uuid

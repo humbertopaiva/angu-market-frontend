@@ -98,9 +98,7 @@ export class SubcategoriesService {
         fetchPolicy: 'cache-first',
       })
 
-      return data.subcategories.edges.map(
-        (edge: any) => edge.node,
-      ) as Array<Subcategory>
+      return data.subcategories as Array<Subcategory>
     } catch (error) {
       console.error('Get subcategories error:', error)
       throw error

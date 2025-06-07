@@ -94,9 +94,7 @@ export class CategoriesService {
         fetchPolicy: 'cache-first',
       })
 
-      return data.categories.edges.map(
-        (edge: any) => edge.node,
-      ) as Array<Category>
+      return data.categories as Array<Category>
     } catch (error) {
       console.error('Get categories error:', error)
       throw error

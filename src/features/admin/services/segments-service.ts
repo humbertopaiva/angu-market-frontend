@@ -94,7 +94,7 @@ export class SegmentsService {
         fetchPolicy: 'cache-first',
       })
 
-      return data.segments.edges.map((edge: any) => edge.node) as Array<Segment>
+      return data.segments as Array<Segment>
     } catch (error) {
       console.error('Get segments error:', error)
       throw error

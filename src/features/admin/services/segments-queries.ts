@@ -1,4 +1,4 @@
-// src/features/admin/services/segments-queries.ts
+// src/features/admin/services/segments-queries.ts - CORRIGIDO
 import { gql } from '@apollo/client'
 
 export const CREATE_SEGMENT_MUTATION = gql`
@@ -80,49 +80,46 @@ export const DELETE_SEGMENT_MUTATION = gql`
   }
 `
 
+// CORREÇÃO: Query principal sem edges wrapper
 export const GET_SEGMENTS_QUERY = gql`
   query GetSegments {
     segments {
-      edges {
-        node {
+      id
+      uuid
+      name
+      slug
+      description
+      icon
+      color
+      order
+      placeId
+      place {
+        id
+        name
+        city
+        state
+      }
+      categories {
+        id
+        name
+        slug
+        order
+        subcategories {
           id
-          uuid
           name
           slug
-          description
-          icon
-          color
           order
-          placeId
-          place {
-            id
-            name
-            city
-            state
-          }
-          categories {
-            id
-            name
-            slug
-            order
-            subcategories {
-              id
-              name
-              slug
-              order
-            }
-          }
-          isActive
-          createdAt
-          updatedAt
         }
       }
+      isActive
+      createdAt
+      updatedAt
     }
   }
 `
 
 export const GET_SEGMENT_BY_ID_QUERY = gql`
-  query GetSegment($id: ID!) {
+  query GetSegment($id: Int!) {
     segment(id: $id) {
       id
       uuid

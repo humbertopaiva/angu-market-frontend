@@ -1,4 +1,4 @@
-// src/features/admin/services/subcategories-queries.ts
+// src/features/admin/services/subcategories-queries.ts - CORRIGIDO
 import { gql } from '@apollo/client'
 
 export const CREATE_SUBCATEGORY_MUTATION = gql`
@@ -94,55 +94,52 @@ export const DELETE_SUBCATEGORY_MUTATION = gql`
   }
 `
 
+// CORREÇÃO: Query principal sem edges wrapper
 export const GET_SUBCATEGORIES_QUERY = gql`
   query GetSubcategories {
     subcategories {
-      edges {
-        node {
+      id
+      uuid
+      name
+      slug
+      description
+      icon
+      order
+      keywords
+      placeId
+      categoryId
+      place {
+        id
+        name
+        city
+        state
+      }
+      category {
+        id
+        name
+        slug
+        color
+        segments {
           id
-          uuid
           name
           slug
-          description
-          icon
-          order
-          keywords
-          placeId
-          categoryId
-          place {
-            id
-            name
-            city
-            state
-          }
-          category {
-            id
-            name
-            slug
-            color
-            segments {
-              id
-              name
-              slug
-              color
-            }
-          }
-          companies {
-            id
-            name
-            slug
-          }
-          isActive
-          createdAt
-          updatedAt
+          color
         }
       }
+      companies {
+        id
+        name
+        slug
+      }
+      isActive
+      createdAt
+      updatedAt
     }
   }
 `
 
 export const GET_SUBCATEGORY_BY_ID_QUERY = gql`
-  query GetSubcategory($id: ID!) {
+  query GetSubcategory($id: Int!) {
     subcategory(id: $id) {
       id
       uuid
