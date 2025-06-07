@@ -133,7 +133,7 @@ export function SegmentForm({
         slug: segment.slug,
         description: segment.description,
         placeId: Number(segment.placeId),
-        icon: segment.icon || '',
+        icon: segment.icon || undefined, // CORREÇÃO: usar undefined em vez de string vazia
         color: segment.color || '#3B82F6',
         order: segment.order || 0,
         isActive: segment.isActive,
@@ -144,7 +144,7 @@ export function SegmentForm({
         slug: '',
         description: '',
         placeId: undefined as any,
-        icon: '',
+        icon: undefined, // CORREÇÃO: usar undefined em vez de string vazia
         color: '#3B82F6',
         order: 0,
         isActive: true,
@@ -290,7 +290,7 @@ export function SegmentForm({
           <div className="space-y-2">
             <Label className="text-sm font-medium">Place *</Label>
             <Select
-              value={selectedPlaceId ? selectedPlaceId.toString() : ''}
+              value={selectedPlaceId ? selectedPlaceId.toString() : undefined} // CORREÇÃO: usar undefined
               onValueChange={(value) => setValue('placeId', Number(value))}
               disabled={isLoading || places.length === 0}
             >
@@ -305,7 +305,7 @@ export function SegmentForm({
               </SelectTrigger>
               <SelectContent>
                 {places.length === 0 ? (
-                  <SelectItem value="" disabled>
+                  <SelectItem value="no-places" disabled>
                     Nenhum place disponível
                   </SelectItem>
                 ) : (
@@ -326,15 +326,18 @@ export function SegmentForm({
             <div className="space-y-2">
               <Label className="text-sm font-medium">Ícone</Label>
               <Select
-                value={selectedIcon || ''}
-                onValueChange={(value) => setValue('icon', value)}
+                value={selectedIcon || undefined} // CORREÇÃO: usar undefined
+                onValueChange={(value) =>
+                  setValue('icon', value === 'no-icon' ? undefined : value)
+                } // CORREÇÃO: tratar valor especial
                 disabled={isLoading}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Selecione um ícone" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Sem ícone</SelectItem>
+                  <SelectItem value="no-icon">Sem ícone</SelectItem>{' '}
+                  {/* CORREÇÃO: usar valor válido */}
                   {availableIcons.map((icon) => (
                     <SelectItem key={icon.value} value={icon.value}>
                       {icon.label}

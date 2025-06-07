@@ -11,9 +11,10 @@ import {
   Tags,
   Trash2,
 } from 'lucide-react'
-import { SegmentForm } from '../components/segment-form'
+
 import { useSegmentsViewModel } from '../viewmodel/segments-viewmodel'
 import { usePlacesViewModel } from '../viewmodel/places-viewmodel'
+import { SegmentForm } from '../components/segment-form'
 import type { Place, Segment } from '@/types/graphql'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'

@@ -153,10 +153,10 @@ export function CategoryForm({
         slug: category.slug,
         description: category.description,
         placeId: Number(category.placeId),
-        icon: category.icon || '',
+        icon: category.icon || undefined,
         color: category.color || '#22C55E',
         order: category.order || 0,
-        keywords: category.keywords || '',
+        keywords: category.keywords || undefined,
         segmentIds: categorySegmentIds,
         isActive: category.isActive,
       })
@@ -167,10 +167,10 @@ export function CategoryForm({
         slug: '',
         description: '',
         placeId: undefined as any,
-        icon: '',
+        icon: undefined,
         color: '#22C55E',
         order: 0,
-        keywords: '',
+        keywords: undefined,
         segmentIds: [],
         isActive: true,
       })
@@ -347,7 +347,7 @@ export function CategoryForm({
           <div className="space-y-2">
             <Label className="text-sm font-medium">Place *</Label>
             <Select
-              value={selectedPlaceId ? selectedPlaceId.toString() : ''}
+              value={selectedPlaceId ? selectedPlaceId.toString() : undefined}
               onValueChange={(value) => setValue('placeId', Number(value))}
               disabled={isLoading || places.length === 0}
             >
@@ -362,7 +362,7 @@ export function CategoryForm({
               </SelectTrigger>
               <SelectContent>
                 {places.length === 0 ? (
-                  <SelectItem value="" disabled>
+                  <SelectItem value="no-places" disabled>
                     Nenhum place disponível
                   </SelectItem>
                 ) : (
@@ -417,15 +417,17 @@ export function CategoryForm({
             <div className="space-y-2">
               <Label className="text-sm font-medium">Ícone</Label>
               <Select
-                value={selectedIcon || ''}
-                onValueChange={(value) => setValue('icon', value)}
+                value={selectedIcon || undefined}
+                onValueChange={(value) =>
+                  setValue('icon', value === 'no-icon' ? undefined : value)
+                }
                 disabled={isLoading}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Selecione um ícone" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Sem ícone</SelectItem>
+                  <SelectItem value="no-icon">Sem ícone</SelectItem>
                   {availableIcons.map((icon) => (
                     <SelectItem key={icon.value} value={icon.value}>
                       {icon.label}

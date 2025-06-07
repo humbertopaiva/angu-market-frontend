@@ -134,9 +134,9 @@ export function SubcategoryForm({
         description: subcategory.description,
         placeId: Number(subcategory.placeId),
         categoryId: Number(subcategory.categoryId),
-        icon: subcategory.icon || '',
+        icon: subcategory.icon || undefined, // CORREÇÃO: usar undefined
         order: subcategory.order || 0,
-        keywords: subcategory.keywords || '',
+        keywords: subcategory.keywords || undefined, // CORREÇÃO: usar undefined
         isActive: subcategory.isActive,
       })
     } else if (isOpen && !subcategory) {
@@ -146,9 +146,9 @@ export function SubcategoryForm({
         description: '',
         placeId: undefined as any,
         categoryId: undefined as any,
-        icon: '',
+        icon: undefined, // CORREÇÃO: usar undefined
         order: 0,
-        keywords: '',
+        keywords: undefined, // CORREÇÃO: usar undefined
         isActive: true,
       })
     }
@@ -310,7 +310,7 @@ export function SubcategoryForm({
             <div className="space-y-2">
               <Label className="text-sm font-medium">Place *</Label>
               <Select
-                value={selectedPlaceId ? selectedPlaceId.toString() : ''}
+                value={selectedPlaceId ? selectedPlaceId.toString() : undefined} // CORREÇÃO: usar undefined
                 onValueChange={(value) => setValue('placeId', Number(value))}
                 disabled={isLoading || places.length === 0}
               >
@@ -325,7 +325,7 @@ export function SubcategoryForm({
                 </SelectTrigger>
                 <SelectContent>
                   {places.length === 0 ? (
-                    <SelectItem value="" disabled>
+                    <SelectItem value="no-places" disabled>
                       Nenhum place disponível
                     </SelectItem>
                   ) : (
@@ -345,7 +345,9 @@ export function SubcategoryForm({
             <div className="space-y-2">
               <Label className="text-sm font-medium">Categoria *</Label>
               <Select
-                value={selectedCategoryId ? selectedCategoryId.toString() : ''}
+                value={
+                  selectedCategoryId ? selectedCategoryId.toString() : undefined
+                } // CORREÇÃO: usar undefined
                 onValueChange={(value) => setValue('categoryId', Number(value))}
                 disabled={isLoading || availableCategories.length === 0}
               >
@@ -362,7 +364,7 @@ export function SubcategoryForm({
                 </SelectTrigger>
                 <SelectContent>
                   {availableCategories.length === 0 ? (
-                    <SelectItem value="" disabled>
+                    <SelectItem value="no-categories" disabled>
                       {!selectedPlaceId
                         ? 'Selecione um place primeiro'
                         : 'Nenhuma categoria disponível'}
@@ -445,15 +447,18 @@ export function SubcategoryForm({
             <div className="space-y-2">
               <Label className="text-sm font-medium">Ícone</Label>
               <Select
-                value={selectedIcon || ''}
-                onValueChange={(value) => setValue('icon', value)}
+                value={selectedIcon || undefined} // CORREÇÃO: usar undefined
+                onValueChange={(value) =>
+                  setValue('icon', value === 'no-icon' ? undefined : value)
+                } // CORREÇÃO: tratar valor especial
                 disabled={isLoading}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Selecione um ícone" />
                 </SelectTrigger>
                 <SelectContent className="max-h-60">
-                  <SelectItem value="">Sem ícone</SelectItem>
+                  <SelectItem value="no-icon">Sem ícone</SelectItem>{' '}
+                  {/* CORREÇÃO: usar valor válido */}
                   {availableIcons.map((icon) => (
                     <SelectItem key={icon.value} value={icon.value}>
                       {icon.label}
