@@ -41,22 +41,6 @@ export class SubcategoriesViewModel {
     }
   }
 
-  async loadSubcategoriesByPlace(placeId: number): Promise<void> {
-    try {
-      this.setLoading(true)
-      const subcategories =
-        await this.subcategoriesService.getSubcategoriesByPlace(placeId)
-      this.setSubcategories([...subcategories])
-    } catch (error: any) {
-      console.error('Error loading subcategories by place:', error)
-      toast.error('Erro ao carregar subcategorias do place', {
-        description: this.getErrorMessage(error),
-      })
-    } finally {
-      this.setLoading(false)
-    }
-  }
-
   async loadSubcategoriesByCategory(categoryId: number): Promise<void> {
     try {
       this.setLoading(true)
@@ -414,27 +398,20 @@ export class SubcategoriesViewModel {
   }
 
   /**
-   * Obter próxima ordem disponível para uma categoria
+   * Obter próxima ordem para uma categoria específica
    */
   getNextOrderForCategory(categoryId: string): number {
-    const categorySubcategories = this.getSubcategoriesForCategory(categoryId)
-
-    if (categorySubcategories.length === 0) {
-      return 1
-    }
-
-    const maxOrder = Math.max(
-      ...categorySubcategories.map((sub) => sub.order || 0),
+    return this.subcategoriesService.getNextOrderForCategory(
+      categoryId,
+      this.subcategories,
     )
-
-    return maxOrder + 1
   }
 
   /**
-   * Validar se categoria pertence ao mesmo place da subcategoria
+   * Validar se categoria pertence ao mesmo place
    */
   validateCategoryForPlace(category: Category, placeId: number): boolean {
-    return Number(category.placeId) === placeId
+    return this.subcategoriesService.validateCategoryForPlace(category, placeId)
   }
 
   private getErrorMessage(error: any): string {
@@ -445,6 +422,42 @@ export class SubcategoriesViewModel {
       return 'Erro de conexão com o servidor'
     }
     return 'Erro interno do servidor'
+  }
+
+  async loadSubcategoriesByPlace(placeId: number): Promise<void> {
+    try {
+      this.setLoading(true)
+      const subcategories =
+        await this.subcategoriesService.getSubcategoriesByPlace(placeId)
+      this.setSubcategories([...subcategories])
+    } catch (error: any) {
+      console.error('Error loading subcategories by place:', error)
+      toast.error('Erro ao carregar subcategorias do place', {
+        description: this.getErrorMessage(error),
+      })
+    } finally {
+      this.setLoading(false)
+    }
+  }
+
+  /**
+   * Verificar se subcategoria pode ser deletada
+   */
+  canDeleteSubcategory(subcategory: Subcategory): boolean {
+    return this.subcategoriesService.canDeleteSubcategory(subcategory)
+  }
+
+  /**
+   * Obter subcategorias que precisam de atenção
+   */
+  getSubcategoriesNeedingAttention(): {
+    withoutCompanies: Array<Subcategory>
+    inactive: Array<Subcategory>
+    missingInfo: Array<Subcategory>
+  } {
+    return this.subcategoriesService.getSubcategoriesNeedingAttention(
+      this.subcategories,
+    )
   }
 }
 

@@ -1,4 +1,3 @@
-// src/features/admin/services/subcategories-queries.ts - CORRIGIDO
 import { gql } from '@apollo/client'
 
 export const CREATE_SUBCATEGORY_MUTATION = gql`
@@ -29,6 +28,7 @@ export const CREATE_SUBCATEGORY_MUTATION = gql`
           id
           name
           slug
+          color
         }
       }
       companies {
@@ -71,6 +71,7 @@ export const UPDATE_SUBCATEGORY_MUTATION = gql`
           id
           name
           slug
+          color
         }
       }
       companies {
@@ -94,7 +95,7 @@ export const DELETE_SUBCATEGORY_MUTATION = gql`
   }
 `
 
-// CORREÇÃO: Query principal sem edges wrapper
+// Query principal das subcategorias
 export const GET_SUBCATEGORIES_QUERY = gql`
   query GetSubcategories {
     subcategories {
@@ -224,6 +225,7 @@ export const GET_SUBCATEGORIES_BY_PLACE_QUERY = gql`
   }
 `
 
+// CORREÇÃO: Query para buscar subcategorias por categoria
 export const GET_SUBCATEGORIES_BY_CATEGORY_QUERY = gql`
   query GetSubcategoriesByCategory($categoryId: Int!) {
     subcategoriesByCategory(categoryId: $categoryId) {
@@ -306,6 +308,51 @@ export const GET_SUBCATEGORY_BY_SLUG_QUERY = gql`
       isActive
       createdAt
       updatedAt
+    }
+  }
+`
+
+// ADICIONAR: Query para subcategorias com contagem de empresas
+export const GET_SUBCATEGORIES_WITH_COMPANY_COUNT_QUERY = gql`
+  query GetSubcategoriesWithCompanyCount($placeId: Int) {
+    subcategoriesWithCompanyCount(placeId: $placeId) {
+      id
+      uuid
+      name
+      slug
+      description
+      icon
+      order
+      keywords
+      placeId
+      categoryId
+      place {
+        id
+        name
+        city
+        state
+      }
+      category {
+        id
+        name
+        slug
+        color
+        segments {
+          id
+          name
+          slug
+          color
+        }
+      }
+      companies {
+        id
+        name
+        slug
+      }
+      isActive
+      createdAt
+      updatedAt
+      companyCount
     }
   }
 `

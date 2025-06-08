@@ -1,6 +1,7 @@
-// src/features/admin/view/subcategories-view.tsx
 import React, { useEffect } from 'react'
 import {
+  AlertTriangle,
+  Building,
   Edit,
   FileText,
   Hash,
@@ -116,6 +117,16 @@ export function SubcategoriesView() {
   }
 
   const handleDeleteSubcategory = async (subcategory: Subcategory) => {
+    // Verificar se pode deletar
+    const hasCompanies =
+      subcategory.companies && subcategory.companies.length > 0
+    if (hasCompanies) {
+      alert(
+        'Esta subcategoria não pode ser removida pois possui empresas associadas.',
+      )
+      return
+    }
+
     if (
       window.confirm(
         `Tem certeza que deseja remover a subcategoria "${subcategory.name}"?`,
@@ -163,6 +174,16 @@ export function SubcategoriesView() {
   // Agrupar subcategorias por categoria
   const groupedSubcategories =
     subcategoriesViewModel.groupSubcategoriesByCategory(sortedSubcategories)
+
+  // Estatísticas simples
+  const stats = {
+    total: filteredSubcategories.length,
+    active: filteredSubcategories.filter((s) => s.isActive).length,
+    withoutCompanies: filteredSubcategories.filter(
+      (s) => !s.companies || s.companies.length === 0,
+    ).length,
+    categories: Object.keys(groupedSubcategories).length,
+  }
 
   if (isSubcategoriesLoading && subcategories.length === 0) {
     return (
@@ -240,6 +261,52 @@ export function SubcategoriesView() {
           </SelectContent>
         </Select>
       </div>
+
+      {/* Card de Estatísticas Simples */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Estatísticas das Subcategorias</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="text-center">
+              <div className="text-2xl font-bold text-blue-600">
+                {stats.total}
+              </div>
+              <div className="text-sm text-gray-600">Total</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl font-bold text-green-600">
+                {stats.active}
+              </div>
+              <div className="text-sm text-gray-600">Ativas</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl font-bold text-orange-600">
+                {stats.withoutCompanies}
+              </div>
+              <div className="text-sm text-gray-600">Sem Empresas</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl font-bold text-purple-600">
+                {stats.categories}
+              </div>
+              <div className="text-sm text-gray-600">Categorias</div>
+            </div>
+          </div>
+
+          {stats.withoutCompanies > 0 && (
+            <div className="mt-4 p-3 bg-orange-50 border border-orange-200 rounded-md">
+              <div className="flex items-center gap-2 text-orange-800">
+                <AlertTriangle className="h-4 w-4" />
+                <span className="text-sm font-medium">
+                  {stats.withoutCompanies} subcategorias sem empresas associadas
+                </span>
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {Object.keys(groupedSubcategories).length === 0 ? (
         <Card>
@@ -328,6 +395,10 @@ export function SubcategoriesView() {
                                   handleDeleteSubcategory(subcategory)
                                 }
                                 className="text-red-600"
+                                disabled={
+                                  subcategory.companies &&
+                                  subcategory.companies.length > 0
+                                }
                               >
                                 <Trash2 className="mr-2 h-4 w-4" />
                                 Remover
@@ -363,10 +434,20 @@ export function SubcategoriesView() {
                             </div>
                           )}
 
-                          <div className="flex items-center gap-2 text-sm text-gray-600">
-                            <span>
-                              Empresas: {subcategory.companies?.length || 0}
+                          <div className="flex items-center gap-2 text-sm">
+                            <Building className="h-4 w-4 text-blue-600" />
+                            <span
+                              className={`font-medium ${
+                                (subcategory.companies?.length || 0) > 0
+                                  ? 'text-green-600'
+                                  : 'text-orange-600'
+                              }`}
+                            >
+                              {subcategory.companies?.length || 0} empresas
                             </span>
+                            {(subcategory.companies?.length || 0) === 0 && (
+                              <AlertTriangle className="h-3 w-3 text-orange-500" />
+                            )}
                           </div>
 
                           <div className="flex items-center justify-between pt-2">

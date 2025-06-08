@@ -5,10 +5,12 @@ import {
   GET_SUBCATEGORIES_BY_CATEGORY_QUERY,
   GET_SUBCATEGORIES_BY_PLACE_QUERY,
   GET_SUBCATEGORIES_QUERY,
+  GET_SUBCATEGORIES_WITH_COMPANY_COUNT_QUERY,
   GET_SUBCATEGORY_BY_ID_QUERY,
   UPDATE_SUBCATEGORY_MUTATION,
 } from './subcategories-queries'
 import type {
+  Category,
   CreateSubcategoryInput,
   Subcategory,
   UpdateSubcategoryInput,
@@ -102,6 +104,77 @@ export class SubcategoriesService {
     } catch (error) {
       console.error('Get subcategories error:', error)
       throw error
+    }
+  }
+
+  /**
+   * Buscar subcategorias com contagem de empresas
+   */
+  async getSubcategoriesWithCompanyCount(
+    placeId?: number,
+  ): Promise<Array<Subcategory & { companyCount: number }>> {
+    try {
+      const { data } = await apolloClient.query({
+        query: GET_SUBCATEGORIES_WITH_COMPANY_COUNT_QUERY,
+        variables: placeId ? { placeId } : {},
+        fetchPolicy: 'cache-first',
+      })
+
+      return data.subcategoriesWithCompanyCount as Array<
+        Subcategory & { companyCount: number }
+      >
+    } catch (error) {
+      console.error('Get subcategories with company count error:', error)
+      throw error
+    }
+  }
+
+  /**
+   * Verificar se subcategoria pode ser deletada (método simulado)
+   */
+  canDeleteSubcategory(subcategory: Subcategory): boolean {
+    return !subcategory.companies || subcategory.companies.length === 0
+  }
+
+  /**
+   * Obter próxima ordem disponível para uma categoria
+   */
+  getNextOrderForCategory(
+    categoryId: string,
+    subcategories: Array<Subcategory>,
+  ): number {
+    const categorySubcategories = subcategories.filter(
+      (sub) => sub.category.id === categoryId,
+    )
+
+    if (categorySubcategories.length === 0) {
+      return 1
+    }
+
+    const maxOrder = Math.max(
+      ...categorySubcategories.map((sub) => sub.order || 0),
+    )
+
+    return maxOrder + 1
+  }
+
+  /**
+   * Obter subcategorias que precisam de atenção (método simulado)
+   */
+  getSubcategoriesNeedingAttention(subcategories: Array<Subcategory>): {
+    withoutCompanies: Array<Subcategory>
+    inactive: Array<Subcategory>
+    missingInfo: Array<Subcategory>
+  } {
+    return {
+      withoutCompanies: subcategories.filter(
+        (sub) => !sub.companies || sub.companies.length === 0,
+      ),
+      inactive: subcategories.filter((sub) => !sub.isActive),
+      missingInfo: subcategories.filter(
+        (sub) =>
+          !sub.description || !sub.keywords || sub.description.length < 10,
+      ),
     }
   }
 
@@ -421,5 +494,12 @@ export class SubcategoriesService {
     })
 
     return groups
+  }
+
+  /**
+   * Validar se categoria pertence ao mesmo place da subcategoria
+   */
+  validateCategoryForPlace(category: Category, placeId: number): boolean {
+    return Number(category.placeId) === placeId
   }
 }

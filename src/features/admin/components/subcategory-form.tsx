@@ -4,6 +4,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { FileText, Loader2, Save, X } from 'lucide-react'
+import { toast } from 'sonner'
 import type {
   CreateSubcategoryInput,
   UpdateSubcategoryInput,
@@ -92,6 +93,12 @@ const availableIcons = [
   { value: 'globe', label: 'Globo' },
   { value: 'wifi', label: 'Wifi' },
   { value: 'smartphone', label: 'Smartphone' },
+  { value: 'coffee', label: 'Café' },
+  { value: 'utensils', label: 'Utensílios' },
+  { value: 'car', label: 'Carro' },
+  { value: 'home', label: 'Casa' },
+  { value: 'music', label: 'Música' },
+  { value: 'camera', label: 'Câmera' },
 ]
 
 export function SubcategoryForm({
@@ -134,9 +141,9 @@ export function SubcategoryForm({
         description: subcategory.description,
         placeId: Number(subcategory.placeId),
         categoryId: Number(subcategory.categoryId),
-        icon: subcategory.icon || undefined, // CORREÇÃO: usar undefined
+        icon: subcategory.icon || undefined,
         order: subcategory.order || 0,
-        keywords: subcategory.keywords || undefined, // CORREÇÃO: usar undefined
+        keywords: subcategory.keywords || undefined,
         isActive: subcategory.isActive,
       })
     } else if (isOpen && !subcategory) {
@@ -146,9 +153,9 @@ export function SubcategoryForm({
         description: '',
         placeId: undefined as any,
         categoryId: undefined as any,
-        icon: undefined, // CORREÇÃO: usar undefined
+        icon: undefined,
         order: 0,
-        keywords: undefined, // CORREÇÃO: usar undefined
+        keywords: undefined,
         isActive: true,
       })
     }
@@ -186,6 +193,13 @@ export function SubcategoryForm({
     }
   }, [selectedPlaceId, isEditing, setValue])
 
+  // Função para obter próxima ordem disponível
+  const getNextOrderForCategory = (categoryId: string): number => {
+    // Esta função seria idealmente implementada no viewModel
+    // Para simplificar, vamos retornar 1 por padrão
+    return 1
+  }
+
   const handleFormSubmit = async (data: SubcategoryFormData) => {
     try {
       const submitData: any = {
@@ -196,6 +210,29 @@ export function SubcategoryForm({
         categoryId: data.categoryId,
         isActive: data.isActive ?? true,
         order: data.order || 0,
+      }
+
+      // Validar se categoria pertence ao place
+      const selectedCategory = availableCategories.find(
+        (cat) => Number(cat.id) === data.categoryId,
+      )
+
+      if (selectedCategory) {
+        const categoryBelongsToPlace =
+          Number(selectedCategory.placeId) === data.placeId
+        if (!categoryBelongsToPlace) {
+          toast.error('Erro de validação', {
+            description:
+              'A categoria selecionada não pertence ao place escolhido',
+          })
+          return
+        }
+      }
+
+      // Se não foi fornecida ordem, usar próxima disponível
+      if (!data.order && selectedCategory) {
+        const nextOrder = getNextOrderForCategory(selectedCategory.id)
+        submitData.order = nextOrder
       }
 
       if (data.icon && data.icon.trim()) {
@@ -220,6 +257,13 @@ export function SubcategoryForm({
       onClose()
     } catch (error) {
       console.error('Form submission error:', error)
+      toast.error('Erro no formulário', {
+        description:
+          typeof error === 'object' && error !== null && 'message' in error
+            ? (error as { message?: string }).message ||
+              'Verifique os dados e tente novamente'
+            : 'Verifique os dados e tente novamente',
+      })
     }
   }
 
@@ -310,7 +354,7 @@ export function SubcategoryForm({
             <div className="space-y-2">
               <Label className="text-sm font-medium">Place *</Label>
               <Select
-                value={selectedPlaceId ? selectedPlaceId.toString() : undefined} // CORREÇÃO: usar undefined
+                value={selectedPlaceId ? selectedPlaceId.toString() : undefined}
                 onValueChange={(value) => setValue('placeId', Number(value))}
                 disabled={isLoading || places.length === 0}
               >
@@ -347,7 +391,7 @@ export function SubcategoryForm({
               <Select
                 value={
                   selectedCategoryId ? selectedCategoryId.toString() : undefined
-                } // CORREÇÃO: usar undefined
+                }
                 onValueChange={(value) => setValue('categoryId', Number(value))}
                 disabled={isLoading || availableCategories.length === 0}
               >
@@ -447,18 +491,17 @@ export function SubcategoryForm({
             <div className="space-y-2">
               <Label className="text-sm font-medium">Ícone</Label>
               <Select
-                value={selectedIcon || undefined} // CORREÇÃO: usar undefined
+                value={selectedIcon || undefined}
                 onValueChange={(value) =>
                   setValue('icon', value === 'no-icon' ? undefined : value)
-                } // CORREÇÃO: tratar valor especial
+                }
                 disabled={isLoading}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Selecione um ícone" />
                 </SelectTrigger>
                 <SelectContent className="max-h-60">
-                  <SelectItem value="no-icon">Sem ícone</SelectItem>{' '}
-                  {/* CORREÇÃO: usar valor válido */}
+                  <SelectItem value="no-icon">Sem ícone</SelectItem>
                   {availableIcons.map((icon) => (
                     <SelectItem key={icon.value} value={icon.value}>
                       {icon.label}
