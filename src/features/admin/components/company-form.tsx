@@ -1,4 +1,4 @@
-// src/features/admin/components/company-form.tsx
+// src/features/admin/components/company-form.tsx - ENHANCED WITH SEGMENTATION
 import React from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -9,7 +9,13 @@ import type {
   UpdateCompanyInput,
 } from '../services/companies-service'
 
-import type { Company, Place } from '@/types/graphql'
+import type {
+  Category,
+  Company,
+  Place,
+  Segment,
+  Subcategory,
+} from '@/types/graphql'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -43,6 +49,11 @@ const companySchema = z.object({
     ),
   description: z.string().min(1, 'Descrição é obrigatória'),
   placeId: z.number().min(1, 'Place é obrigatório'),
+  // NOVOS CAMPOS DE SEGMENTAÇÃO
+  segmentId: z.number().optional(),
+  categoryId: z.number().optional(),
+  subcategoryId: z.number().optional(),
+  // CAMPOS EXISTENTES
   phone: z.string().optional(),
   email: z.string().email('Email inválido').optional().or(z.literal('')),
   website: z
@@ -73,6 +84,9 @@ type CompanyFormData = z.infer<typeof companySchema>
 interface CompanyFormProps {
   company?: Company
   places: Array<Place>
+  segments: Array<Segment>
+  categories: Array<Category>
+  subcategories: Array<Subcategory>
   isOpen: boolean
   onClose: () => void
   onSubmit: (data: CreateCompanyInput | UpdateCompanyInput) => Promise<void>
@@ -82,6 +96,9 @@ interface CompanyFormProps {
 export function CompanyForm({
   company,
   places,
+  segments,
+  categories,
+  subcategories,
   isOpen,
   onClose,
   onSubmit,
@@ -111,6 +128,15 @@ export function CompanyForm({
         slug: company.slug,
         description: company.description,
         placeId: Number(company.placeId),
+        // NOVOS CAMPOS DE SEGMENTAÇÃO
+        segmentId: company.category?.segments?.[0]?.id
+          ? Number(company.category.segments[0].id)
+          : undefined,
+        categoryId: company.categoryId ? Number(company.categoryId) : undefined,
+        subcategoryId: company.subcategoryId
+          ? Number(company.subcategoryId)
+          : undefined,
+        // CAMPOS EXISTENTES
         phone: company.phone || '',
         email: company.email || '',
         website: company.website || '',
@@ -129,6 +155,9 @@ export function CompanyForm({
         slug: '',
         description: '',
         placeId: undefined as any,
+        segmentId: undefined,
+        categoryId: undefined,
+        subcategoryId: undefined,
         phone: '',
         email: '',
         website: '',
@@ -145,6 +174,64 @@ export function CompanyForm({
   }, [isOpen, company, reset])
 
   const selectedPlaceId = watch('placeId')
+  const selectedSegmentId = watch('segmentId')
+  const selectedCategoryId = watch('categoryId')
+
+  // Filtrar segmentos por place
+  const availableSegments = React.useMemo(() => {
+    if (!selectedPlaceId) return []
+    return segments.filter(
+      (segment) => Number(segment.placeId) === selectedPlaceId,
+    )
+  }, [segments, selectedPlaceId])
+
+  // Filtrar categorias por place e segmento
+  const availableCategories = React.useMemo(() => {
+    if (!selectedPlaceId) return []
+
+    let filtered = categories.filter(
+      (category) => Number(category.placeId) === selectedPlaceId,
+    )
+
+    if (selectedSegmentId) {
+      filtered = filtered.filter((category) =>
+        category.segments?.some(
+          (segment) => Number(segment.id) === selectedSegmentId,
+        ),
+      )
+    }
+
+    return filtered
+  }, [categories, selectedPlaceId, selectedSegmentId])
+
+  // Filtrar subcategorias por category
+  const availableSubcategories = React.useMemo(() => {
+    if (!selectedCategoryId) return []
+    return subcategories.filter(
+      (subcategory) => Number(subcategory.categoryId) === selectedCategoryId,
+    )
+  }, [subcategories, selectedCategoryId])
+
+  React.useEffect(() => {
+    if (selectedPlaceId && !isEditing) {
+      setValue('segmentId', undefined)
+      setValue('categoryId', undefined)
+      setValue('subcategoryId', undefined)
+    }
+  }, [selectedPlaceId, isEditing, setValue])
+
+  React.useEffect(() => {
+    if (selectedSegmentId && !isEditing) {
+      setValue('categoryId', undefined)
+      setValue('subcategoryId', undefined)
+    }
+  }, [selectedSegmentId, isEditing, setValue])
+
+  React.useEffect(() => {
+    if (selectedCategoryId && !isEditing) {
+      setValue('subcategoryId', undefined)
+    }
+  }, [selectedCategoryId, isEditing, setValue])
 
   const handleFormSubmit = async (data: CompanyFormData) => {
     try {
@@ -155,6 +242,14 @@ export function CompanyForm({
         description: data.description.trim(),
         placeId: data.placeId,
         isActive: data.isActive ?? true,
+      }
+
+      // CAMPOS DE SEGMENTAÇÃO
+      if (data.categoryId) {
+        submitData.categoryId = data.categoryId
+      }
+      if (data.subcategoryId) {
+        submitData.subcategoryId = data.subcategoryId
       }
 
       // Adicionar campos opcionais apenas se tiverem valor válido
@@ -174,7 +269,7 @@ export function CompanyForm({
         submitData.address = data.address.trim()
       }
 
-      // CORREÇÃO: Só incluir latitude/longitude se forem valores válidos (não zero)
+      // Só incluir latitude/longitude se forem valores válidos (não zero)
       if (
         data.latitude !== undefined &&
         !isNaN(data.latitude) &&
@@ -207,7 +302,7 @@ export function CompanyForm({
         submitData.cnpj = data.cnpj.trim()
       }
 
-      console.log('Form submit data (cleaned):', submitData)
+      console.log('Company form submit data (with segmentation):', submitData)
 
       if (isEditing) {
         await onSubmit({
@@ -299,7 +394,7 @@ export function CompanyForm({
           <div className="space-y-2">
             <Label className="text-sm font-medium">Place *</Label>
             <Select
-              value={selectedPlaceId ? selectedPlaceId.toString() : ''}
+              value={selectedPlaceId ? selectedPlaceId.toString() : 'no-place'}
               onValueChange={(value) => setValue('placeId', Number(value))}
               disabled={isLoading || places.length === 0}
             >
@@ -314,7 +409,7 @@ export function CompanyForm({
               </SelectTrigger>
               <SelectContent>
                 {places.length === 0 ? (
-                  <SelectItem value="" disabled>
+                  <SelectItem value="no-places" disabled>
                     Nenhum place disponível
                   </SelectItem>
                 ) : (
@@ -337,6 +432,204 @@ export function CompanyForm({
             )}
           </div>
 
+          {/* SEÇÃO DE SEGMENTAÇÃO */}
+          <div className="border-t pt-6">
+            <h3 className="text-lg font-medium text-gray-900 mb-4">
+              Categorização (Opcional)
+            </h3>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {/* SEGMENTO */}
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Segmento</Label>
+                <Select
+                  value={
+                    selectedSegmentId
+                      ? selectedSegmentId.toString()
+                      : 'no-segment'
+                  }
+                  onValueChange={(value) =>
+                    setValue(
+                      'segmentId',
+                      value === 'no-segment' ? undefined : Number(value),
+                    )
+                  }
+                  disabled={
+                    isLoading ||
+                    !selectedPlaceId ||
+                    availableSegments.length === 0
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue
+                      placeholder={
+                        !selectedPlaceId
+                          ? 'Selecione um place primeiro'
+                          : availableSegments.length === 0
+                            ? 'Nenhum segmento disponível'
+                            : 'Selecione um segmento'
+                      }
+                    />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="no-segment">Sem segmento</SelectItem>
+                    {availableSegments.map((segment) => (
+                      <SelectItem key={segment.id} value={segment.id}>
+                        <div className="flex items-center gap-2">
+                          <div
+                            className="w-3 h-3 rounded"
+                            style={{
+                              backgroundColor: segment.color || '#6B7280',
+                            }}
+                          />
+                          {segment.name}
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* CATEGORIA */}
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Categoria</Label>
+                <Select
+                  value={
+                    selectedCategoryId
+                      ? selectedCategoryId.toString()
+                      : 'no-category'
+                  }
+                  onValueChange={(value) =>
+                    setValue(
+                      'categoryId',
+                      value === 'no-category' ? undefined : Number(value),
+                    )
+                  }
+                  disabled={
+                    isLoading ||
+                    !selectedPlaceId ||
+                    availableCategories.length === 0
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue
+                      placeholder={
+                        !selectedPlaceId
+                          ? 'Selecione um place primeiro'
+                          : availableCategories.length === 0
+                            ? 'Nenhuma categoria disponível'
+                            : 'Selecione uma categoria'
+                      }
+                    />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="no-category">Sem categoria</SelectItem>
+                    {availableCategories.map((category) => (
+                      <SelectItem key={category.id} value={category.id}>
+                        <div className="flex items-center gap-2">
+                          <div
+                            className="w-3 h-3 rounded"
+                            style={{
+                              backgroundColor: category.color || '#22C55E',
+                            }}
+                          />
+                          {category.name}
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* SUBCATEGORIA */}
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Subcategoria</Label>
+                <Select
+                  value={
+                    watch('subcategoryId')
+                      ? watch('subcategoryId')!.toString()
+                      : 'no-subcategory'
+                  }
+                  onValueChange={(value) =>
+                    setValue(
+                      'subcategoryId',
+                      value === 'no-subcategory' ? undefined : Number(value),
+                    )
+                  }
+                  disabled={
+                    isLoading ||
+                    !selectedCategoryId ||
+                    availableSubcategories.length === 0
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue
+                      placeholder={
+                        !selectedCategoryId
+                          ? 'Selecione uma categoria primeiro'
+                          : availableSubcategories.length === 0
+                            ? 'Nenhuma subcategoria disponível'
+                            : 'Selecione uma subcategoria'
+                      }
+                    />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="no-subcategory">
+                      Sem subcategoria
+                    </SelectItem>
+                    {availableSubcategories.map((subcategory) => (
+                      <SelectItem key={subcategory.id} value={subcategory.id}>
+                        {subcategory.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            {/* INFORMAÇÕES DOS ITENS SELECIONADOS */}
+            {(selectedSegmentId || selectedCategoryId) && (
+              <div className="mt-4 p-3 bg-gray-50 rounded-md border">
+                <h4 className="text-sm font-medium text-gray-900 mb-2">
+                  Categorização Selecionada:
+                </h4>
+                <div className="space-y-1 text-sm text-gray-600">
+                  {selectedSegmentId && (
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium">Segmento:</span>
+                      {
+                        availableSegments.find(
+                          (s) => Number(s.id) === selectedSegmentId,
+                        )?.name
+                      }
+                    </div>
+                  )}
+                  {selectedCategoryId && (
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium">Categoria:</span>
+                      {
+                        availableCategories.find(
+                          (c) => Number(c.id) === selectedCategoryId,
+                        )?.name
+                      }
+                    </div>
+                  )}
+                  {watch('subcategoryId') && (
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium">Subcategoria:</span>
+                      {
+                        availableSubcategories.find(
+                          (s) => Number(s.id) === watch('subcategoryId'),
+                        )?.name
+                      }
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* RESTO DOS CAMPOS EXISTENTES */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="phone" className="text-sm font-medium">
