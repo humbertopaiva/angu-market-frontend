@@ -121,7 +121,6 @@ export const GET_CATEGORIES_QUERY = gql`
         name
         slug
         color
-        order
       }
       subcategories {
         id

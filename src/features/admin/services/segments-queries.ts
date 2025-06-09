@@ -270,6 +270,12 @@ export const GET_SUBCATEGORIES_QUERY = gql`
         name
         slug
         color
+        segments {
+          id
+          name
+          slug
+          color
+        }
       }
       companies {
         id
