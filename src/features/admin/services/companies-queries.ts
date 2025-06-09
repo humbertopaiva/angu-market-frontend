@@ -363,3 +363,184 @@ export const GET_COMPANY_WITH_USERS_QUERY = gql`
     }
   }
 `
+
+export const ASSIGN_COMPANY_TO_SEGMENT_MUTATION = gql`
+  mutation AssignCompanyToSegment($companyId: Int!, $segmentId: Int!) {
+    assignCompanyToSegment(companyId: $companyId, segmentId: $segmentId) {
+      id
+      name
+      categoryId
+      subcategoryId
+      category {
+        id
+        name
+        segments {
+          id
+          name
+          color
+        }
+      }
+      subcategory {
+        id
+        name
+        category {
+          id
+          name
+        }
+      }
+    }
+  }
+`
+
+export const ASSIGN_COMPANY_TO_CATEGORY_MUTATION = gql`
+  mutation AssignCompanyToCategory($companyId: Int!, $categoryId: Int!) {
+    assignCompanyToCategory(companyId: $companyId, categoryId: $categoryId) {
+      id
+      name
+      categoryId
+      subcategoryId
+      category {
+        id
+        name
+        segments {
+          id
+          name
+          color
+        }
+      }
+      subcategory {
+        id
+        name
+        category {
+          id
+          name
+        }
+      }
+    }
+  }
+`
+
+export const ASSIGN_COMPANY_TO_SUBCATEGORY_MUTATION = gql`
+  mutation AssignCompanyToSubcategory($companyId: Int!, $subcategoryId: Int!) {
+    assignCompanyToSubcategory(
+      companyId: $companyId
+      subcategoryId: $subcategoryId
+    ) {
+      id
+      name
+      categoryId
+      subcategoryId
+      category {
+        id
+        name
+        segments {
+          id
+          name
+          color
+        }
+      }
+      subcategory {
+        id
+        name
+        category {
+          id
+          name
+        }
+      }
+    }
+  }
+`
+
+export const REMOVE_COMPANY_FROM_SEGMENTATION_MUTATION = gql`
+  mutation RemoveCompanyFromSegmentation($companyId: Int!) {
+    removeCompanyFromSegmentation(companyId: $companyId) {
+      id
+      name
+      categoryId
+      subcategoryId
+      category {
+        id
+        name
+        segments {
+          id
+          name
+          color
+        }
+      }
+      subcategory {
+        id
+        name
+        category {
+          id
+          name
+        }
+      }
+    }
+  }
+`
+
+// QUERIES AUXILIARES
+export const GET_COMPANIES_WITHOUT_SEGMENTATION_QUERY = gql`
+  query GetCompaniesWithoutSegmentation($placeId: Int) {
+    companiesWithoutSegmentation(placeId: $placeId) {
+      id
+      name
+      slug
+      description
+      placeId
+      place {
+        id
+        name
+        city
+        state
+      }
+      isActive
+    }
+  }
+`
+
+export const GET_SEGMENTATION_DATA_FOR_PLACE_QUERY = gql`
+  query GetSegmentationDataForPlace($placeId: Int!) {
+    segmentsByPlace(placeId: $placeId) {
+      id
+      name
+      slug
+      color
+      description
+      order
+      isActive
+    }
+    categoriesByPlace(placeId: $placeId) {
+      id
+      name
+      slug
+      color
+      description
+      order
+      isActive
+      segments {
+        id
+        name
+        color
+      }
+    }
+    subcategoriesByPlace(placeId: $placeId) {
+      id
+      name
+      slug
+      description
+      order
+      isActive
+      category {
+        id
+        name
+        color
+        segments {
+          id
+          name
+          color
+        }
+      }
+    }
+  }
+`

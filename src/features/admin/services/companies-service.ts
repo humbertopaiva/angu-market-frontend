@@ -1,13 +1,19 @@
-// src/features/admin/services/companies-service.ts - COMPLETE ENHANCED VERSION
+// src/features/admin/services/companies-service.ts - VERSÃO COMPLETA
 
 import {
+  ASSIGN_COMPANY_TO_CATEGORY_MUTATION,
+  ASSIGN_COMPANY_TO_SEGMENT_MUTATION,
+  ASSIGN_COMPANY_TO_SUBCATEGORY_MUTATION,
   CREATE_COMPANY_MUTATION,
   CREATE_COMPANY_WITH_USERS_MUTATION,
   DELETE_COMPANY_MUTATION,
   GET_COMPANIES_BY_PLACE_QUERY,
   GET_COMPANIES_QUERY,
+  GET_COMPANIES_WITHOUT_SEGMENTATION_QUERY,
   GET_COMPANY_BY_ID_QUERY,
   GET_COMPANY_WITH_USERS_QUERY,
+  GET_SEGMENTATION_DATA_FOR_PLACE_QUERY,
+  REMOVE_COMPANY_FROM_SEGMENTATION_MUTATION,
   UPDATE_COMPANY_MUTATION,
 } from './companies-queries'
 import type {
@@ -21,7 +27,284 @@ import { GET_AVAILABLE_USERS_FOR_COMPANY_QUERY } from '@/features/auth/services/
 
 export type { CreateCompanyInput, UpdateCompanyInput }
 
+export interface SegmentationData {
+  segments: Array<{
+    id: string
+    name: string
+    slug: string
+    color?: string
+    description: string
+    order: number
+    isActive: boolean
+  }>
+  categories: Array<{
+    id: string
+    name: string
+    slug: string
+    color?: string
+    description: string
+    order: number
+    isActive: boolean
+    segments: Array<{
+      id: string
+      name: string
+      color?: string
+    }>
+  }>
+  subcategories: Array<{
+    id: string
+    name: string
+    slug: string
+    description: string
+    order: number
+    isActive: boolean
+    category: {
+      id: string
+      name: string
+      color?: string
+      segments: Array<{
+        id: string
+        name: string
+        color?: string
+      }>
+    }
+  }>
+}
+
 export class CompaniesService {
+  // ===== MÉTODOS DE SEGMENTAÇÃO =====
+
+  /**
+   * Atrelar empresa a segmento
+   */
+  async assignCompanyToSegment(
+    companyId: number,
+    segmentId: number,
+  ): Promise<Company> {
+    try {
+      console.log('Assigning company to segment:', { companyId, segmentId })
+
+      const { data } = await apolloClient.mutate({
+        mutation: ASSIGN_COMPANY_TO_SEGMENT_MUTATION,
+        variables: { companyId, segmentId },
+        refetchQueries: [
+          { query: GET_COMPANIES_QUERY },
+          {
+            query: GET_COMPANIES_BY_PLACE_QUERY,
+            variables: { placeId: undefined },
+          },
+        ],
+      })
+
+      return data.assignCompanyToSegment as Company
+    } catch (error) {
+      console.error('Assign company to segment error:', error)
+      throw error
+    }
+  }
+
+  /**
+   * Atrelar empresa a categoria
+   */
+  async assignCompanyToCategory(
+    companyId: number,
+    categoryId: number,
+  ): Promise<Company> {
+    try {
+      console.log('Assigning company to category:', { companyId, categoryId })
+
+      const { data } = await apolloClient.mutate({
+        mutation: ASSIGN_COMPANY_TO_CATEGORY_MUTATION,
+        variables: { companyId, categoryId },
+        refetchQueries: [
+          { query: GET_COMPANIES_QUERY },
+          {
+            query: GET_COMPANIES_BY_PLACE_QUERY,
+            variables: { placeId: undefined },
+          },
+        ],
+      })
+
+      return data.assignCompanyToCategory as Company
+    } catch (error) {
+      console.error('Assign company to category error:', error)
+      throw error
+    }
+  }
+
+  /**
+   * Atrelar empresa a subcategoria
+   */
+  async assignCompanyToSubcategory(
+    companyId: number,
+    subcategoryId: number,
+  ): Promise<Company> {
+    try {
+      console.log('Assigning company to subcategory:', {
+        companyId,
+        subcategoryId,
+      })
+
+      const { data } = await apolloClient.mutate({
+        mutation: ASSIGN_COMPANY_TO_SUBCATEGORY_MUTATION,
+        variables: { companyId, subcategoryId },
+        refetchQueries: [
+          { query: GET_COMPANIES_QUERY },
+          {
+            query: GET_COMPANIES_BY_PLACE_QUERY,
+            variables: { placeId: undefined },
+          },
+        ],
+      })
+
+      return data.assignCompanyToSubcategory as Company
+    } catch (error) {
+      console.error('Assign company to subcategory error:', error)
+      throw error
+    }
+  }
+
+  /**
+   * Remover segmentação da empresa
+   */
+  async removeCompanyFromSegmentation(companyId: number): Promise<Company> {
+    try {
+      console.log('Removing company from segmentation:', companyId)
+
+      const { data } = await apolloClient.mutate({
+        mutation: REMOVE_COMPANY_FROM_SEGMENTATION_MUTATION,
+        variables: { companyId },
+        refetchQueries: [
+          { query: GET_COMPANIES_QUERY },
+          {
+            query: GET_COMPANIES_BY_PLACE_QUERY,
+            variables: { placeId: undefined },
+          },
+        ],
+      })
+
+      return data.removeCompanyFromSegmentation as Company
+    } catch (error) {
+      console.error('Remove company from segmentation error:', error)
+      throw error
+    }
+  }
+
+  /**
+   * Obter dados de segmentação para um place
+   */
+  async getSegmentationDataForPlace(
+    placeId: number,
+  ): Promise<SegmentationData> {
+    try {
+      console.log('Getting segmentation data for place:', placeId)
+
+      const { data } = await apolloClient.query({
+        query: GET_SEGMENTATION_DATA_FOR_PLACE_QUERY,
+        variables: { placeId },
+        fetchPolicy: 'cache-first',
+      })
+
+      return {
+        segments: data.segmentsByPlace || [],
+        categories: data.categoriesByPlace || [],
+        subcategories: data.subcategoriesByPlace || [],
+      }
+    } catch (error) {
+      console.error('Get segmentation data error:', error)
+      throw error
+    }
+  }
+
+  /**
+   * Obter empresas sem segmentação
+   */
+  async getCompaniesWithoutSegmentation(
+    placeId?: number,
+  ): Promise<Array<Company>> {
+    try {
+      console.log('Getting companies without segmentation for place:', placeId)
+
+      const { data } = await apolloClient.query({
+        query: GET_COMPANIES_WITHOUT_SEGMENTATION_QUERY,
+        variables: placeId ? { placeId } : {},
+        fetchPolicy: 'cache-first',
+      })
+
+      return data.companiesWithoutSegmentation as Array<Company>
+    } catch (error) {
+      console.error('Get companies without segmentation error:', error)
+      throw error
+    }
+  }
+
+  /**
+   * Obter hierarquia de segmentação para uma empresa
+   */
+  getCompanySegmentationHierarchy(company: Company): {
+    segment?: { id: string; name: string; color?: string }
+    category?: { id: string; name: string; color?: string }
+    subcategory?: { id: string; name: string }
+    hasFullHierarchy: boolean
+  } {
+    const result = {
+      segment: undefined as any,
+      category: undefined as any,
+      subcategory: undefined as any,
+      hasFullHierarchy: false,
+    }
+
+    if (company.subcategory) {
+      result.subcategory = {
+        id: company.subcategory.id,
+        name: company.subcategory.name,
+      }
+
+      result.category = {
+        id: company.subcategory.category.id,
+        name: company.subcategory.category.name,
+        color: company.subcategory.category.color,
+      }
+
+      // Verificar se a categoria tem segmentos
+      const segments = (company.subcategory.category as any).segments
+      if (segments && segments.length > 0) {
+        result.segment = {
+          id: segments[0].id,
+          name: segments[0].name,
+          color: segments[0].color,
+        }
+      }
+    } else if (company.category) {
+      result.category = {
+        id: company.category.id,
+        name: company.category.name,
+        color: company.category.color,
+      }
+
+      // Verificar se a categoria tem segmentos
+      const segments = (company.category as any).segments
+      if (segments && segments.length > 0) {
+        result.segment = {
+          id: segments[0].id,
+          name: segments[0].name,
+          color: segments[0].color,
+        }
+      }
+    }
+
+    // Verificar se tem hierarquia completa
+    result.hasFullHierarchy = !!(
+      result.segment &&
+      result.category &&
+      result.subcategory
+    )
+
+    return result
+  }
+
+  // ===== MÉTODOS EXISTENTES DE EMPRESA =====
+
   /**
    * Criar empresa básica (sem usuários)
    */
@@ -116,7 +399,6 @@ export class CompaniesService {
 
       console.log('Companies data received:', data)
 
-      // Retornar diretamente o array de companies
       return data.companies as Array<Company>
     } catch (error) {
       console.error('Get companies error:', error)
@@ -177,6 +459,41 @@ export class CompaniesService {
       throw error
     }
   }
+
+  /**
+   * Buscar empresa com detalhes completos dos usuários
+   */
+  async getCompanyWithUsersDetails(id: number): Promise<Company> {
+    try {
+      console.log('Getting company with users details for ID:', id)
+
+      const { data } = await apolloClient.query({
+        query: GET_COMPANY_WITH_USERS_QUERY,
+        variables: { id },
+        fetchPolicy: 'network-only',
+      })
+
+      console.log('Company with users details received:', {
+        id: data.companyDetails.id,
+        name: data.companyDetails.name,
+        usersCount: data.companyDetails.users?.length || 0,
+        users:
+          data.companyDetails.users?.map((user: any) => ({
+            id: user.id,
+            name: user.name,
+            rolesCount: user.userRoles?.length || 0,
+            roles: user.userRoles?.map((ur: any) => ur.role?.name) || [],
+          })) || [],
+      })
+
+      return data.companyDetails as Company
+    } catch (error) {
+      console.error('Get company with users details error:', error)
+      throw error
+    }
+  }
+
+  // ===== MÉTODOS DE VALIDAÇÃO E LIMPEZA =====
 
   /**
    * Limpar dados de entrada para criação básica de empresa
@@ -449,6 +766,7 @@ export class CompaniesService {
     placeId?: number
     isActive?: boolean
     hasUsers?: boolean
+    hasSegmentation?: boolean
   }): Promise<Array<Company>> {
     try {
       let companies: Array<Company>
@@ -469,6 +787,8 @@ export class CompaniesService {
             company.description,
             company.place.name,
             company.slug,
+            company.category?.name || '',
+            company.subcategory?.name || '',
           ]
             .join(' ')
             .toLowerCase()
@@ -494,6 +814,16 @@ export class CompaniesService {
           }
         }
 
+        // Filtro por ter segmentação
+        if (filters.hasSegmentation !== undefined) {
+          const hasSegmentation = !!(
+            company.categoryId || company.subcategoryId
+          )
+          if (hasSegmentation !== filters.hasSegmentation) {
+            return false
+          }
+        }
+
         return true
       })
     } catch (error) {
@@ -511,6 +841,8 @@ export class CompaniesService {
     inactive: number
     withUsers: number
     withoutUsers: number
+    withSegmentation: number
+    withoutSegmentation: number
     byPlace: Record<string, number>
   }> {
     try {
@@ -524,6 +856,12 @@ export class CompaniesService {
           .length,
         withoutUsers: companies.filter((c) => !c.users || c.users.length === 0)
           .length,
+        withSegmentation: companies.filter(
+          (c) => c.categoryId || c.subcategoryId,
+        ).length,
+        withoutSegmentation: companies.filter(
+          (c) => !c.categoryId && !c.subcategoryId,
+        ).length,
         byPlace: {} as Record<string, number>,
       }
 
@@ -536,40 +874,6 @@ export class CompaniesService {
       return stats
     } catch (error) {
       console.error('Error getting companies stats:', error)
-      throw error
-    }
-  }
-
-  /**
-   * Buscar empresa com detalhes completos dos usuários
-   * Específico para gestão de admins
-   */
-  async getCompanyWithUsersDetails(id: number): Promise<Company> {
-    try {
-      console.log('Getting company with users details for ID:', id)
-
-      const { data } = await apolloClient.query({
-        query: GET_COMPANY_WITH_USERS_QUERY,
-        variables: { id },
-        fetchPolicy: 'network-only', // Sempre buscar dados frescos
-      })
-
-      console.log('Company with users details received:', {
-        id: data.companyDetails.id,
-        name: data.companyDetails.name,
-        usersCount: data.companyDetails.users?.length || 0,
-        users:
-          data.companyDetails.users?.map((user: any) => ({
-            id: user.id,
-            name: user.name,
-            rolesCount: user.userRoles?.length || 0,
-            roles: user.userRoles?.map((ur: any) => ur.role?.name) || [],
-          })) || [],
-      })
-
-      return data.companyDetails as Company
-    } catch (error) {
-      console.error('Get company with users details error:', error)
       throw error
     }
   }
