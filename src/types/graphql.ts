@@ -80,13 +80,20 @@ export interface Company {
   banner?: string
   cnpj?: string
   tags?: string
+
+  // CAMPOS DE SEGMENTAÇÃO
+  segmentId?: number
   categoryId?: number
   subcategoryId?: number
+
+  // RELACIONAMENTOS
   placeId: number
   place: Place
+  segment?: Segment
   category?: Category
   subcategory?: Subcategory
   users?: Array<User>
+
   isActive: boolean
   createdAt: string
   updatedAt: string
@@ -108,6 +115,13 @@ export interface CreateCompanyInput {
   slug: string
   description: string
   placeId: number
+
+  // CAMPOS DE SEGMENTAÇÃO - OPCIONAIS POR ENQUANTO
+  segmentId?: number
+  categoryId?: number
+  subcategoryId?: number
+
+  // CAMPOS OPCIONAIS
   phone?: string
   email?: string
   website?: string
