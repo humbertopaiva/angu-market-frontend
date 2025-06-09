@@ -1,4 +1,4 @@
-// src/features/admin/components/company-form.tsx - HIERARQUIA OBRIGATÓRIA
+// src/features/admin/components/company-form.tsx - CORRIGIDO
 import React from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -125,13 +125,35 @@ export function CompanyForm({
 
   React.useEffect(() => {
     if (isOpen && company) {
+      console.log('Company form - editing company:', {
+        id: company.id,
+        name: company.name,
+        segmentId: company.segmentId,
+        categoryId: company.categoryId,
+        subcategoryId: company.subcategoryId,
+        segment: company.segment?.name,
+        category: company.category?.name,
+        subcategory: company.subcategory?.name,
+      })
+
+      // CORREÇÃO: Buscar segmentId da empresa através da categoria ou segmento direto
+      let segmentId: number | undefined = undefined
+
+      if (company.segmentId) {
+        segmentId = Number(company.segmentId)
+      } else if (company.category?.segments?.[0]) {
+        segmentId = Number(company.category.segments[0].id)
+      } else if (company.subcategory?.category.segments?.[0]) {
+        segmentId = Number(company.subcategory.category.segments[0].id)
+      }
+
       reset({
         name: company.name,
         slug: company.slug,
         description: company.description,
         placeId: Number(company.placeId),
-        // HIERARQUIA OBRIGATÓRIA - carregar valores atuais
-        segmentId: company.segmentId ? Number(company.segmentId) : undefined,
+        // CORREÇÃO: Carregar valores corretamente da empresa
+        segmentId: segmentId,
         categoryId: company.categoryId ? Number(company.categoryId) : undefined,
         subcategoryId: company.subcategoryId
           ? Number(company.subcategoryId)
@@ -148,6 +170,12 @@ export function CompanyForm({
         banner: company.banner || '',
         cnpj: company.cnpj || '',
         isActive: company.isActive,
+      })
+
+      console.log('Company form - reset with values:', {
+        segmentId,
+        categoryId: company.categoryId,
+        subcategoryId: company.subcategoryId,
       })
     } else if (isOpen && !company) {
       reset({
@@ -208,7 +236,7 @@ export function CompanyForm({
     )
   }, [subcategories, selectedCategoryId])
 
-  // Resetar seleções em cascata
+  // CORREÇÃO: Resetar seleções em cascata APENAS quando não estiver editando
   React.useEffect(() => {
     if (selectedPlaceId && !isEditing) {
       setValue('segmentId', undefined as any)
@@ -232,6 +260,8 @@ export function CompanyForm({
 
   const handleFormSubmit = async (data: CompanyFormData) => {
     try {
+      console.log('Company form submit - data:', data)
+
       // Processar os dados para enviar
       const submitData: any = {
         name: data.name.trim(),
@@ -432,6 +462,28 @@ export function CompanyForm({
               Todos os campos abaixo são obrigatórios. A hierarquia deve ser:
               Segmento → Categoria → Subcategoria
             </p>
+
+            {/* MOSTRAR SEGMENTAÇÃO ATUAL EM EDIÇÃO */}
+            {isEditing && (
+              <div className="mb-4 p-4 bg-blue-50 rounded-md border border-blue-200">
+                <h4 className="text-sm font-medium text-blue-900 mb-2">
+                  Segmentação Atual:
+                </h4>
+                <div className="flex items-center gap-2 text-sm text-blue-800">
+                  <span className="font-medium">
+                    {company.segment?.name || 'Sem segmento'}
+                  </span>
+                  <span>→</span>
+                  <span className="font-medium">
+                    {company.category?.name || 'Sem categoria'}
+                  </span>
+                  <span>→</span>
+                  <span className="font-medium">
+                    {company.subcategory?.name || 'Sem subcategoria'}
+                  </span>
+                </div>
+              </div>
+            )}
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {/* SEGMENTO OBRIGATÓRIO */}

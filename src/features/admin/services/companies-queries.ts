@@ -1,148 +1,146 @@
-// src/features/admin/services/companies-queries.ts - CORRIGIDO
+// src/features/admin/services/companies-queries.ts - CORRIGIDO COM SEGMENTAÇÃO COMPLETA
 import { gql } from '@apollo/client'
 
-export const CREATE_COMPANY_MUTATION = gql`
-  mutation CreateCompany($createCompanyInput: CreateCompanyInput!) {
-    createCompany(createCompanyInput: $createCompanyInput) {
+// Fragment comum para segmentação completa
+const COMPANY_SEGMENTATION_FRAGMENT = gql`
+  fragment CompanySegmentation on Company {
+    segmentId
+    categoryId
+    subcategoryId
+    segment {
+      id
+      name
+      slug
+      color
+      order
+    }
+    category {
+      id
+      name
+      slug
+      color
+      order
+      segments {
+        id
+        name
+        slug
+        color
+      }
+    }
+    subcategory {
+      id
+      name
+      slug
+      order
+      category {
+        id
+        name
+        slug
+        color
+        segments {
+          id
+          name
+          slug
+          color
+        }
+      }
+    }
+  }
+`
+
+// Fragment comum para dados básicos da empresa
+const COMPANY_BASE_FRAGMENT = gql`
+  fragment CompanyBase on Company {
+    id
+    uuid
+    name
+    slug
+    description
+    phone
+    email
+    website
+    address
+    latitude
+    longitude
+    openingHours
+    logo
+    banner
+    cnpj
+    placeId
+    place {
+      id
+      name
+      city
+      state
+    }
+    isActive
+    createdAt
+    updatedAt
+  }
+`
+
+// Fragment para usuários completos
+const COMPANY_USERS_FRAGMENT = gql`
+  fragment CompanyUsers on Company {
+    users {
       id
       uuid
       name
-      slug
-      description
-      phone
       email
-      website
-      address
-      latitude
-      longitude
-      openingHours
-      logo
-      banner
-      cnpj
-      placeId
-      place {
+      phone
+      avatar
+      isActive
+      isVerified
+      companyId
+      userRoles {
         id
-        name
-        city
-        state
-      }
-      users {
-        id
-        uuid
-        name
-        email
-        phone
-        isActive
-        userRoles {
+        role {
           id
-          role {
-            id
-            name
-            description
-          }
+          name
+          description
         }
       }
-      isActive
-      createdAt
-      updatedAt
+    }
+  }
+`
+
+export const CREATE_COMPANY_MUTATION = gql`
+  ${COMPANY_BASE_FRAGMENT}
+  ${COMPANY_SEGMENTATION_FRAGMENT}
+  ${COMPANY_USERS_FRAGMENT}
+  mutation CreateCompany($createCompanyInput: CreateCompanyInput!) {
+    createCompany(createCompanyInput: $createCompanyInput) {
+      ...CompanyBase
+      ...CompanySegmentation
+      ...CompanyUsers
     }
   }
 `
 
 export const CREATE_COMPANY_WITH_USERS_MUTATION = gql`
+  ${COMPANY_BASE_FRAGMENT}
+  ${COMPANY_SEGMENTATION_FRAGMENT}
+  ${COMPANY_USERS_FRAGMENT}
   mutation CreateCompanyWithUsers(
     $createCompanyInput: CreateCompanyEnhancedInput!
   ) {
     createCompanyWithUsers(createCompanyInput: $createCompanyInput) {
-      id
-      uuid
-      name
-      slug
-      description
-      phone
-      email
-      website
-      address
-      latitude
-      longitude
-      openingHours
-      logo
-      banner
-      cnpj
-      placeId
-      place {
-        id
-        name
-        city
-        state
-      }
-      users {
-        id
-        uuid
-        name
-        email
-        phone
-        isActive
-        userRoles {
-          id
-          role {
-            id
-            name
-            description
-          }
-        }
-      }
-      isActive
-      createdAt
-      updatedAt
+      ...CompanyBase
+      ...CompanySegmentation
+      ...CompanyUsers
     }
   }
 `
 
 export const UPDATE_COMPANY_MUTATION = gql`
+  ${COMPANY_BASE_FRAGMENT}
+  ${COMPANY_SEGMENTATION_FRAGMENT}
+  ${COMPANY_USERS_FRAGMENT}
   mutation UpdateCompany($updateCompanyInput: UpdateCompanyInput!) {
     updateCompany(updateCompanyInput: $updateCompanyInput) {
-      id
-      uuid
-      name
-      slug
-      description
-      phone
-      email
-      website
-      address
-      latitude
-      longitude
-      openingHours
-      logo
-      banner
-      cnpj
-      placeId
-      place {
-        id
-        name
-        city
-        state
-      }
-      users {
-        id
-        uuid
-        name
-        email
-        phone
-        isActive
-        userRoles {
-          id
-          role {
-            id
-            name
-            description
-          }
-        }
-      }
-      isActive
-      createdAt
-      updatedAt
+      ...CompanyBase
+      ...CompanySegmentation
+      ...CompanyUsers
     }
   }
 `
@@ -153,186 +151,54 @@ export const DELETE_COMPANY_MUTATION = gql`
   }
 `
 
-// CORREÇÃO: Query principal das empresas com usuários e roles completos
+// CORREÇÃO PRINCIPAL: Query completa das empresas com toda a segmentação
 export const GET_COMPANIES_QUERY = gql`
+  ${COMPANY_BASE_FRAGMENT}
+  ${COMPANY_SEGMENTATION_FRAGMENT}
+  ${COMPANY_USERS_FRAGMENT}
   query GetCompanies {
     companies {
-      id
-      uuid
-      name
-      slug
-      description
-      phone
-      email
-      website
-      address
-      latitude
-      longitude
-      openingHours
-      logo
-      banner
-      cnpj
-      placeId
-      place {
-        id
-        name
-        city
-        state
-      }
-      users {
-        id
-        uuid
-        name
-        email
-        phone
-        avatar
-        isActive
-        isVerified
-        companyId
-        userRoles {
-          id
-          role {
-            id
-            name
-            description
-          }
-        }
-      }
-      isActive
-      createdAt
-      updatedAt
+      ...CompanyBase
+      ...CompanySegmentation
+      ...CompanyUsers
     }
   }
 `
 
 export const GET_COMPANY_BY_ID_QUERY = gql`
+  ${COMPANY_BASE_FRAGMENT}
+  ${COMPANY_SEGMENTATION_FRAGMENT}
+  ${COMPANY_USERS_FRAGMENT}
   query GetCompany($id: ID!) {
     company(id: $id) {
-      id
-      uuid
-      name
-      slug
-      description
-      phone
-      email
-      website
-      address
-      latitude
-      longitude
-      openingHours
-      logo
-      banner
-      cnpj
-      placeId
-      place {
-        id
-        name
-        city
-        state
-      }
-      users {
-        id
-        uuid
-        name
-        email
-        phone
-        avatar
-        isActive
-        isVerified
-        companyId
-        userRoles {
-          id
-          role {
-            id
-            name
-            description
-          }
-        }
-      }
-      isActive
-      createdAt
-      updatedAt
+      ...CompanyBase
+      ...CompanySegmentation
+      ...CompanyUsers
     }
   }
 `
 
 export const GET_COMPANIES_BY_PLACE_QUERY = gql`
+  ${COMPANY_BASE_FRAGMENT}
+  ${COMPANY_SEGMENTATION_FRAGMENT}
+  ${COMPANY_USERS_FRAGMENT}
   query GetCompaniesByPlace($placeId: Int!) {
     companiesByPlace(placeId: $placeId) {
-      id
-      uuid
-      name
-      slug
-      description
-      phone
-      email
-      website
-      address
-      latitude
-      longitude
-      openingHours
-      logo
-      banner
-      cnpj
-      placeId
-      place {
-        id
-        name
-        city
-        state
-      }
-      users {
-        id
-        uuid
-        name
-        email
-        phone
-        avatar
-        isActive
-        isVerified
-        companyId
-        userRoles {
-          id
-          role {
-            id
-            name
-            description
-          }
-        }
-      }
-      isActive
-      createdAt
-      updatedAt
+      ...CompanyBase
+      ...CompanySegmentation
+      ...CompanyUsers
     }
   }
 `
 
-// ADIÇÃO: Query específica para obter empresa com detalhes completos dos usuários
+// Query específica para obter empresa com detalhes completos dos usuários
 export const GET_COMPANY_WITH_USERS_QUERY = gql`
+  ${COMPANY_BASE_FRAGMENT}
+  ${COMPANY_SEGMENTATION_FRAGMENT}
   query GetCompanyWithUsers($id: Int!) {
     companyDetails(id: $id) {
-      id
-      uuid
-      name
-      slug
-      description
-      phone
-      email
-      website
-      address
-      latitude
-      longitude
-      openingHours
-      logo
-      banner
-      cnpj
-      placeId
-      place {
-        id
-        name
-        city
-        state
-      }
+      ...CompanyBase
+      ...CompanySegmentation
       users {
         id
         uuid
@@ -357,70 +223,35 @@ export const GET_COMPANY_WITH_USERS_QUERY = gql`
           }
         }
       }
-      isActive
-      createdAt
-      updatedAt
     }
   }
 `
 
+// Mutations de segmentação
 export const ASSIGN_COMPANY_TO_SEGMENT_MUTATION = gql`
+  ${COMPANY_SEGMENTATION_FRAGMENT}
   mutation AssignCompanyToSegment($companyId: Int!, $segmentId: Int!) {
     assignCompanyToSegment(companyId: $companyId, segmentId: $segmentId) {
       id
       name
-      categoryId
-      subcategoryId
-      category {
-        id
-        name
-        segments {
-          id
-          name
-          color
-        }
-      }
-      subcategory {
-        id
-        name
-        category {
-          id
-          name
-        }
-      }
+      ...CompanySegmentation
     }
   }
 `
 
 export const ASSIGN_COMPANY_TO_CATEGORY_MUTATION = gql`
+  ${COMPANY_SEGMENTATION_FRAGMENT}
   mutation AssignCompanyToCategory($companyId: Int!, $categoryId: Int!) {
     assignCompanyToCategory(companyId: $companyId, categoryId: $categoryId) {
       id
       name
-      categoryId
-      subcategoryId
-      category {
-        id
-        name
-        segments {
-          id
-          name
-          color
-        }
-      }
-      subcategory {
-        id
-        name
-        category {
-          id
-          name
-        }
-      }
+      ...CompanySegmentation
     }
   }
 `
 
 export const ASSIGN_COMPANY_TO_SUBCATEGORY_MUTATION = gql`
+  ${COMPANY_SEGMENTATION_FRAGMENT}
   mutation AssignCompanyToSubcategory($companyId: Int!, $subcategoryId: Int!) {
     assignCompanyToSubcategory(
       companyId: $companyId
@@ -428,53 +259,18 @@ export const ASSIGN_COMPANY_TO_SUBCATEGORY_MUTATION = gql`
     ) {
       id
       name
-      categoryId
-      subcategoryId
-      category {
-        id
-        name
-        segments {
-          id
-          name
-          color
-        }
-      }
-      subcategory {
-        id
-        name
-        category {
-          id
-          name
-        }
-      }
+      ...CompanySegmentation
     }
   }
 `
 
 export const REMOVE_COMPANY_FROM_SEGMENTATION_MUTATION = gql`
+  ${COMPANY_SEGMENTATION_FRAGMENT}
   mutation RemoveCompanyFromSegmentation($companyId: Int!) {
     removeCompanyFromSegmentation(companyId: $companyId) {
       id
       name
-      categoryId
-      subcategoryId
-      category {
-        id
-        name
-        segments {
-          id
-          name
-          color
-        }
-      }
-      subcategory {
-        id
-        name
-        category {
-          id
-          name
-        }
-      }
+      ...CompanySegmentation
     }
   }
 `
@@ -541,6 +337,46 @@ export const GET_SEGMENTATION_DATA_FOR_PLACE_QUERY = gql`
           color
         }
       }
+    }
+  }
+`
+
+// Queries por segmentação
+export const GET_COMPANIES_BY_SEGMENT_QUERY = gql`
+  ${COMPANY_BASE_FRAGMENT}
+  ${COMPANY_SEGMENTATION_FRAGMENT}
+  ${COMPANY_USERS_FRAGMENT}
+  query GetCompaniesBySegment($segmentId: Int!) {
+    companiesBySegment(segmentId: $segmentId) {
+      ...CompanyBase
+      ...CompanySegmentation
+      ...CompanyUsers
+    }
+  }
+`
+
+export const GET_COMPANIES_BY_CATEGORY_QUERY = gql`
+  ${COMPANY_BASE_FRAGMENT}
+  ${COMPANY_SEGMENTATION_FRAGMENT}
+  ${COMPANY_USERS_FRAGMENT}
+  query GetCompaniesByCategory($categoryId: Int!) {
+    companiesByCategory(categoryId: $categoryId) {
+      ...CompanyBase
+      ...CompanySegmentation
+      ...CompanyUsers
+    }
+  }
+`
+
+export const GET_COMPANIES_BY_SUBCATEGORY_QUERY = gql`
+  ${COMPANY_BASE_FRAGMENT}
+  ${COMPANY_SEGMENTATION_FRAGMENT}
+  ${COMPANY_USERS_FRAGMENT}
+  query GetCompaniesBySubcategory($subcategoryId: Int!) {
+    companiesBySubcategory(subcategoryId: $subcategoryId) {
+      ...CompanyBase
+      ...CompanySegmentation
+      ...CompanyUsers
     }
   }
 `
