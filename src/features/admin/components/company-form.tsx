@@ -1,4 +1,4 @@
-// src/features/admin/components/company-form.tsx - ENHANCED WITH SEGMENTATION
+// src/features/admin/components/company-form.tsx - HIERARQUIA OBRIGATÓRIA
 import React from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -49,11 +49,13 @@ const companySchema = z.object({
     ),
   description: z.string().min(1, 'Descrição é obrigatória'),
   placeId: z.number().min(1, 'Place é obrigatório'),
-  // NOVOS CAMPOS DE SEGMENTAÇÃO
-  segmentId: z.number().optional(),
-  categoryId: z.number().optional(),
-  subcategoryId: z.number().optional(),
-  // CAMPOS EXISTENTES
+
+  // HIERARQUIA DE SEGMENTAÇÃO - TODOS OBRIGATÓRIOS
+  segmentId: z.number().min(1, 'Segmento é obrigatório'),
+  categoryId: z.number().min(1, 'Categoria é obrigatória'),
+  subcategoryId: z.number().min(1, 'Subcategoria é obrigatória'),
+
+  // CAMPOS OPCIONAIS
   phone: z.string().optional(),
   email: z.string().email('Email inválido').optional().or(z.literal('')),
   website: z
@@ -128,15 +130,13 @@ export function CompanyForm({
         slug: company.slug,
         description: company.description,
         placeId: Number(company.placeId),
-        // NOVOS CAMPOS DE SEGMENTAÇÃO
-        segmentId: company.category?.segments?.[0]?.id
-          ? Number(company.category.segments[0].id)
-          : undefined,
+        // HIERARQUIA OBRIGATÓRIA - carregar valores atuais
+        segmentId: company.segmentId ? Number(company.segmentId) : undefined,
         categoryId: company.categoryId ? Number(company.categoryId) : undefined,
         subcategoryId: company.subcategoryId
           ? Number(company.subcategoryId)
           : undefined,
-        // CAMPOS EXISTENTES
+        // Campos opcionais
         phone: company.phone || '',
         email: company.email || '',
         website: company.website || '',
@@ -155,9 +155,9 @@ export function CompanyForm({
         slug: '',
         description: '',
         placeId: undefined as any,
-        segmentId: undefined,
-        categoryId: undefined,
-        subcategoryId: undefined,
+        segmentId: undefined as any,
+        categoryId: undefined as any,
+        subcategoryId: undefined as any,
         phone: '',
         email: '',
         website: '',
@@ -187,24 +187,20 @@ export function CompanyForm({
 
   // Filtrar categorias por place e segmento
   const availableCategories = React.useMemo(() => {
-    if (!selectedPlaceId) return []
+    if (!selectedPlaceId || !selectedSegmentId) return []
 
-    let filtered = categories.filter(
-      (category) => Number(category.placeId) === selectedPlaceId,
-    )
+    return categories.filter((category) => {
+      // Deve ser do mesmo place
+      if (Number(category.placeId) !== selectedPlaceId) return false
 
-    if (selectedSegmentId) {
-      filtered = filtered.filter((category) =>
-        category.segments?.some(
-          (segment) => Number(segment.id) === selectedSegmentId,
-        ),
+      // Deve pertencer ao segmento selecionado
+      return category.segments?.some(
+        (segment) => Number(segment.id) === selectedSegmentId,
       )
-    }
-
-    return filtered
+    })
   }, [categories, selectedPlaceId, selectedSegmentId])
 
-  // Filtrar subcategorias por category
+  // Filtrar subcategorias por categoria
   const availableSubcategories = React.useMemo(() => {
     if (!selectedCategoryId) return []
     return subcategories.filter(
@@ -212,44 +208,41 @@ export function CompanyForm({
     )
   }, [subcategories, selectedCategoryId])
 
+  // Resetar seleções em cascata
   React.useEffect(() => {
     if (selectedPlaceId && !isEditing) {
-      setValue('segmentId', undefined)
-      setValue('categoryId', undefined)
-      setValue('subcategoryId', undefined)
+      setValue('segmentId', undefined as any)
+      setValue('categoryId', undefined as any)
+      setValue('subcategoryId', undefined as any)
     }
   }, [selectedPlaceId, isEditing, setValue])
 
   React.useEffect(() => {
     if (selectedSegmentId && !isEditing) {
-      setValue('categoryId', undefined)
-      setValue('subcategoryId', undefined)
+      setValue('categoryId', undefined as any)
+      setValue('subcategoryId', undefined as any)
     }
   }, [selectedSegmentId, isEditing, setValue])
 
   React.useEffect(() => {
     if (selectedCategoryId && !isEditing) {
-      setValue('subcategoryId', undefined)
+      setValue('subcategoryId', undefined as any)
     }
   }, [selectedCategoryId, isEditing, setValue])
 
   const handleFormSubmit = async (data: CompanyFormData) => {
     try {
-      // Processar os dados para enviar apenas campos válidos
+      // Processar os dados para enviar
       const submitData: any = {
         name: data.name.trim(),
         slug: data.slug.trim(),
         description: data.description.trim(),
         placeId: data.placeId,
+        // HIERARQUIA OBRIGATÓRIA
+        segmentId: data.segmentId,
+        categoryId: data.categoryId,
+        subcategoryId: data.subcategoryId,
         isActive: data.isActive ?? true,
-      }
-
-      // CAMPOS DE SEGMENTAÇÃO
-      if (data.categoryId) {
-        submitData.categoryId = data.categoryId
-      }
-      if (data.subcategoryId) {
-        submitData.subcategoryId = data.subcategoryId
       }
 
       // Adicionar campos opcionais apenas se tiverem valor válido
@@ -302,7 +295,10 @@ export function CompanyForm({
         submitData.cnpj = data.cnpj.trim()
       }
 
-      console.log('Company form submit data (with segmentation):', submitData)
+      console.log(
+        'Company form submit data (with required hierarchy):',
+        submitData,
+      )
 
       if (isEditing) {
         await onSubmit({
@@ -336,11 +332,12 @@ export function CompanyForm({
           <DialogDescription>
             {isEditing
               ? 'Edite as informações da empresa abaixo.'
-              : 'Preencha as informações para criar uma nova empresa.'}
+              : 'Preencha as informações para criar uma nova empresa. Todos os campos de segmentação são obrigatórios.'}
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
+          {/* Informações Básicas */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="name" className="text-sm font-medium">
@@ -424,24 +421,22 @@ export function CompanyForm({
             {errors.placeId && (
               <p className="text-sm text-red-600">{errors.placeId.message}</p>
             )}
-            {places.length === 0 && (
-              <p className="text-sm text-amber-600">
-                É necessário ter pelo menos um place criado para adicionar
-                empresas.
-              </p>
-            )}
           </div>
 
-          {/* SEÇÃO DE SEGMENTAÇÃO */}
+          {/* SEÇÃO DE SEGMENTAÇÃO OBRIGATÓRIA */}
           <div className="border-t pt-6">
-            <h3 className="text-lg font-medium text-gray-900 mb-4">
-              Categorização (Opcional)
+            <h3 className="text-lg font-medium text-gray-900 mb-2">
+              Categorização *
             </h3>
+            <p className="text-sm text-gray-600 mb-4">
+              Todos os campos abaixo são obrigatórios. A hierarquia deve ser:
+              Segmento → Categoria → Subcategoria
+            </p>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {/* SEGMENTO */}
+              {/* SEGMENTO OBRIGATÓRIO */}
               <div className="space-y-2">
-                <Label className="text-sm font-medium">Segmento</Label>
+                <Label className="text-sm font-medium">Segmento *</Label>
                 <Select
                   value={
                     selectedSegmentId
@@ -451,7 +446,9 @@ export function CompanyForm({
                   onValueChange={(value) =>
                     setValue(
                       'segmentId',
-                      value === 'no-segment' ? undefined : Number(value),
+                      value === 'no-segment'
+                        ? (undefined as any)
+                        : Number(value),
                     )
                   }
                   disabled={
@@ -472,7 +469,6 @@ export function CompanyForm({
                     />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="no-segment">Sem segmento</SelectItem>
                     {availableSegments.map((segment) => (
                       <SelectItem key={segment.id} value={segment.id}>
                         <div className="flex items-center gap-2">
@@ -488,11 +484,16 @@ export function CompanyForm({
                     ))}
                   </SelectContent>
                 </Select>
+                {errors.segmentId && (
+                  <p className="text-sm text-red-600">
+                    {errors.segmentId.message}
+                  </p>
+                )}
               </div>
 
-              {/* CATEGORIA */}
+              {/* CATEGORIA OBRIGATÓRIA */}
               <div className="space-y-2">
-                <Label className="text-sm font-medium">Categoria</Label>
+                <Label className="text-sm font-medium">Categoria *</Label>
                 <Select
                   value={
                     selectedCategoryId
@@ -502,20 +503,22 @@ export function CompanyForm({
                   onValueChange={(value) =>
                     setValue(
                       'categoryId',
-                      value === 'no-category' ? undefined : Number(value),
+                      value === 'no-category'
+                        ? (undefined as any)
+                        : Number(value),
                     )
                   }
                   disabled={
                     isLoading ||
-                    !selectedPlaceId ||
+                    !selectedSegmentId ||
                     availableCategories.length === 0
                   }
                 >
                   <SelectTrigger>
                     <SelectValue
                       placeholder={
-                        !selectedPlaceId
-                          ? 'Selecione um place primeiro'
+                        !selectedSegmentId
+                          ? 'Selecione um segmento primeiro'
                           : availableCategories.length === 0
                             ? 'Nenhuma categoria disponível'
                             : 'Selecione uma categoria'
@@ -523,7 +526,6 @@ export function CompanyForm({
                     />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="no-category">Sem categoria</SelectItem>
                     {availableCategories.map((category) => (
                       <SelectItem key={category.id} value={category.id}>
                         <div className="flex items-center gap-2">
@@ -539,21 +541,33 @@ export function CompanyForm({
                     ))}
                   </SelectContent>
                 </Select>
+                {errors.categoryId && (
+                  <p className="text-sm text-red-600">
+                    {errors.categoryId.message}
+                  </p>
+                )}
+                {selectedSegmentId && availableCategories.length === 0 && (
+                  <p className="text-xs text-amber-600">
+                    Nenhuma categoria encontrada para este segmento.
+                  </p>
+                )}
               </div>
 
-              {/* SUBCATEGORIA */}
+              {/* SUBCATEGORIA OBRIGATÓRIA */}
               <div className="space-y-2">
-                <Label className="text-sm font-medium">Subcategoria</Label>
+                <Label className="text-sm font-medium">Subcategoria *</Label>
                 <Select
                   value={
                     watch('subcategoryId')
-                      ? watch('subcategoryId')!.toString()
+                      ? watch('subcategoryId').toString()
                       : 'no-subcategory'
                   }
                   onValueChange={(value) =>
                     setValue(
                       'subcategoryId',
-                      value === 'no-subcategory' ? undefined : Number(value),
+                      value === 'no-subcategory'
+                        ? (undefined as any)
+                        : Number(value),
                     )
                   }
                   disabled={
@@ -574,9 +588,6 @@ export function CompanyForm({
                     />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="no-subcategory">
-                      Sem subcategoria
-                    </SelectItem>
                     {availableSubcategories.map((subcategory) => (
                       <SelectItem key={subcategory.id} value={subcategory.id}>
                         {subcategory.name}
@@ -584,211 +595,226 @@ export function CompanyForm({
                     ))}
                   </SelectContent>
                 </Select>
+                {errors.subcategoryId && (
+                  <p className="text-sm text-red-600">
+                    {errors.subcategoryId.message}
+                  </p>
+                )}
+                {selectedCategoryId && availableSubcategories.length === 0 && (
+                  <p className="text-xs text-amber-600">
+                    Nenhuma subcategoria encontrada para esta categoria.
+                  </p>
+                )}
               </div>
             </div>
 
-            {/* INFORMAÇÕES DOS ITENS SELECIONADOS */}
-            {(selectedSegmentId || selectedCategoryId) && (
-              <div className="mt-4 p-3 bg-gray-50 rounded-md border">
-                <h4 className="text-sm font-medium text-gray-900 mb-2">
-                  Categorização Selecionada:
-                </h4>
-                <div className="space-y-1 text-sm text-gray-600">
-                  {selectedSegmentId && (
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium">Segmento:</span>
+            {/* PREVIEW DA HIERARQUIA SELECIONADA */}
+            {selectedSegmentId &&
+              selectedCategoryId &&
+              watch('subcategoryId') && (
+                <div className="mt-4 p-4 bg-green-50 rounded-md border border-green-200">
+                  <h4 className="text-sm font-medium text-green-900 mb-2">
+                    Hierarquia Selecionada:
+                  </h4>
+                  <div className="flex items-center gap-2 text-sm text-green-800">
+                    <span className="font-medium">
                       {
                         availableSegments.find(
                           (s) => Number(s.id) === selectedSegmentId,
                         )?.name
                       }
-                    </div>
-                  )}
-                  {selectedCategoryId && (
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium">Categoria:</span>
+                    </span>
+                    <span>→</span>
+                    <span className="font-medium">
                       {
                         availableCategories.find(
                           (c) => Number(c.id) === selectedCategoryId,
                         )?.name
                       }
-                    </div>
-                  )}
-                  {watch('subcategoryId') && (
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium">Subcategoria:</span>
+                    </span>
+                    <span>→</span>
+                    <span className="font-medium">
                       {
                         availableSubcategories.find(
                           (s) => Number(s.id) === watch('subcategoryId'),
                         )?.name
                       }
-                    </div>
-                  )}
+                    </span>
+                  </div>
                 </div>
+              )}
+          </div>
+
+          {/* CAMPOS OPCIONAIS DA EMPRESA */}
+          <div className="border-t pt-6">
+            <h3 className="text-lg font-medium text-gray-900 mb-4">
+              Informações Adicionais (Opcional)
+            </h3>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="phone" className="text-sm font-medium">
+                  Telefone
+                </Label>
+                <Input
+                  id="phone"
+                  placeholder="(11) 99999-9999"
+                  {...register('phone')}
+                  disabled={isLoading}
+                />
               </div>
-            )}
-          </div>
 
-          {/* RESTO DOS CAMPOS EXISTENTES */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="email" className="text-sm font-medium">
+                  Email
+                </Label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="contato@empresa.com"
+                  {...register('email')}
+                  disabled={isLoading}
+                />
+                {errors.email && (
+                  <p className="text-sm text-red-600">{errors.email.message}</p>
+                )}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="website" className="text-sm font-medium">
+                  Website
+                </Label>
+                <Input
+                  id="website"
+                  type="url"
+                  placeholder="https://empresa.com"
+                  {...register('website')}
+                  disabled={isLoading}
+                />
+                {errors.website && (
+                  <p className="text-sm text-red-600">
+                    {errors.website.message}
+                  </p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="cnpj" className="text-sm font-medium">
+                  CNPJ
+                </Label>
+                <Input
+                  id="cnpj"
+                  placeholder="00.000.000/0000-00"
+                  {...register('cnpj')}
+                  disabled={isLoading}
+                />
+              </div>
+            </div>
+
             <div className="space-y-2">
-              <Label htmlFor="phone" className="text-sm font-medium">
-                Telefone
+              <Label htmlFor="address" className="text-sm font-medium">
+                Endereço
               </Label>
               <Input
-                id="phone"
-                placeholder="(11) 99999-9999"
-                {...register('phone')}
+                id="address"
+                placeholder="Endereço completo"
+                {...register('address')}
                 disabled={isLoading}
               />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="email" className="text-sm font-medium">
-                Email
-              </Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="contato@empresa.com"
-                {...register('email')}
-                disabled={isLoading}
-              />
-              {errors.email && (
-                <p className="text-sm text-red-600">{errors.email.message}</p>
-              )}
-            </div>
-          </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="latitude" className="text-sm font-medium">
+                  Latitude
+                </Label>
+                <Input
+                  id="latitude"
+                  type="number"
+                  step="any"
+                  placeholder="-23.5505"
+                  {...register('latitude')}
+                  disabled={isLoading}
+                />
+              </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="website" className="text-sm font-medium">
-                Website
-              </Label>
-              <Input
-                id="website"
-                type="url"
-                placeholder="https://empresa.com"
-                {...register('website')}
-                disabled={isLoading}
-              />
-              {errors.website && (
-                <p className="text-sm text-red-600">{errors.website.message}</p>
-              )}
+              <div className="space-y-2">
+                <Label htmlFor="longitude" className="text-sm font-medium">
+                  Longitude
+                </Label>
+                <Input
+                  id="longitude"
+                  type="number"
+                  step="any"
+                  placeholder="-46.6333"
+                  {...register('longitude')}
+                  disabled={isLoading}
+                />
+              </div>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="cnpj" className="text-sm font-medium">
-                CNPJ
+              <Label htmlFor="openingHours" className="text-sm font-medium">
+                Horário de Funcionamento
               </Label>
               <Input
-                id="cnpj"
-                placeholder="00.000.000/0000-00"
-                {...register('cnpj')}
-                disabled={isLoading}
-              />
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="address" className="text-sm font-medium">
-              Endereço
-            </Label>
-            <Input
-              id="address"
-              placeholder="Endereço completo"
-              {...register('address')}
-              disabled={isLoading}
-            />
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="latitude" className="text-sm font-medium">
-                Latitude
-              </Label>
-              <Input
-                id="latitude"
-                type="number"
-                step="any"
-                placeholder="-23.5505"
-                {...register('latitude')}
+                id="openingHours"
+                placeholder="Seg-Sex: 9h-18h"
+                {...register('openingHours')}
                 disabled={isLoading}
               />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="longitude" className="text-sm font-medium">
-                Longitude
-              </Label>
-              <Input
-                id="longitude"
-                type="number"
-                step="any"
-                placeholder="-46.6333"
-                {...register('longitude')}
-                disabled={isLoading}
-              />
-            </div>
-          </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="logo" className="text-sm font-medium">
+                  Logo (URL)
+                </Label>
+                <Input
+                  id="logo"
+                  type="url"
+                  placeholder="https://exemplo.com/logo.png"
+                  {...register('logo')}
+                  disabled={isLoading}
+                />
+                {errors.logo && (
+                  <p className="text-sm text-red-600">{errors.logo.message}</p>
+                )}
+              </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="openingHours" className="text-sm font-medium">
-              Horário de Funcionamento
-            </Label>
-            <Input
-              id="openingHours"
-              placeholder="Seg-Sex: 9h-18h"
-              {...register('openingHours')}
-              disabled={isLoading}
-            />
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="logo" className="text-sm font-medium">
-                Logo (URL)
-              </Label>
-              <Input
-                id="logo"
-                type="url"
-                placeholder="https://exemplo.com/logo.png"
-                {...register('logo')}
-                disabled={isLoading}
-              />
-              {errors.logo && (
-                <p className="text-sm text-red-600">{errors.logo.message}</p>
-              )}
+              <div className="space-y-2">
+                <Label htmlFor="banner" className="text-sm font-medium">
+                  Banner (URL)
+                </Label>
+                <Input
+                  id="banner"
+                  type="url"
+                  placeholder="https://exemplo.com/banner.png"
+                  {...register('banner')}
+                  disabled={isLoading}
+                />
+                {errors.banner && (
+                  <p className="text-sm text-red-600">
+                    {errors.banner.message}
+                  </p>
+                )}
+              </div>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="banner" className="text-sm font-medium">
-                Banner (URL)
-              </Label>
-              <Input
-                id="banner"
-                type="url"
-                placeholder="https://exemplo.com/banner.png"
-                {...register('banner')}
+            <div className="flex items-center space-x-2">
+              <input
+                id="isActive"
+                type="checkbox"
+                {...register('isActive')}
                 disabled={isLoading}
+                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
               />
-              {errors.banner && (
-                <p className="text-sm text-red-600">{errors.banner.message}</p>
-              )}
+              <Label htmlFor="isActive" className="text-sm font-medium">
+                Empresa ativa
+              </Label>
             </div>
-          </div>
-
-          <div className="flex items-center space-x-2">
-            <input
-              id="isActive"
-              type="checkbox"
-              {...register('isActive')}
-              disabled={isLoading}
-              className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-            />
-            <Label htmlFor="isActive" className="text-sm font-medium">
-              Empresa ativa
-            </Label>
           </div>
 
           <div className="flex justify-end space-x-2 pt-4 border-t">
@@ -803,7 +829,14 @@ export function CompanyForm({
             </Button>
             <Button
               type="submit"
-              disabled={isLoading || !isValid || places.length === 0}
+              disabled={
+                isLoading ||
+                !isValid ||
+                places.length === 0 ||
+                !selectedSegmentId ||
+                !selectedCategoryId ||
+                !watch('subcategoryId')
+              }
             >
               {isLoading ? (
                 <>
