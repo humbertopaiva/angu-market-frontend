@@ -197,15 +197,6 @@ export class CompanyAdminService {
       }
     }
 
-    if (userRoles.includes(RoleType.COMPANY_STAFF)) {
-      return {
-        label: 'Funcionário',
-        color: 'green',
-        canBeAdmin: true,
-        currentCompany: user.company?.name || 'Empresa não encontrada',
-      }
-    }
-
     return {
       label: 'Usuário Público',
       color: 'gray',
@@ -257,46 +248,7 @@ export class CompanyAdminService {
     return admins
   }
 
-  /**
-   * Buscar funcionários de uma empresa
-   */
-  getCompanyStaff(company: Company): Array<User> {
-    console.debug('=== GET COMPANY STAFF DEBUG START ===')
-    console.debug('Company:', company.name)
-
-    if (!company.users || company.users.length === 0) {
-      console.debug('No users found for company staff')
-      return []
-    }
-
-    const staff = company.users.filter((user) => {
-      if (!user.userRoles || user.userRoles.length === 0) {
-        return false
-      }
-
-      const userRoles = user.userRoles.map((ur) => ur.role.name)
-      const isStaff = userRoles.includes(RoleType.COMPANY_STAFF)
-
-      console.debug(
-        'User:',
-        user.name,
-        'roles:',
-        userRoles,
-        'isStaff:',
-        isStaff,
-      )
-
-      return isStaff
-    })
-
-    console.debug(
-      'Found staff:',
-      staff.map((s) => ({ name: s.name, id: s.id })),
-    )
-    console.debug('=== GET COMPANY STAFF DEBUG END ===')
-
-    return staff
-  }
+ 
 
   /**
    * Validar se pode atribuir admin
@@ -355,5 +307,53 @@ export class CompanyAdminService {
       console.error('Get company with users details error:', error)
       throw error
     }
+  }
+
+   /**
+   * Categorizar usuários disponíveis
+   */
+  categorizeUsers(users: User[]): {
+    available: User[]
+    admins: User[]
+    unavailable: User[]
+  } {
+    console.debug('=== CATEGORIZE USERS DEBUG START ===')
+    console.debug('Total users to categorize:', users.length)
+
+    const available: User[] = []
+    const admins: User[] = []
+    const unavailable: User[] = []
+
+    users.forEach((user) => {
+      const userRoles = user.userRoles?.map((ur) => ur.role.name) || []
+      console.debug(`User: ${user.name}, Roles: ${userRoles.join(', ')}`)
+
+      // Usuários com roles administrativas superiores não podem ser admins de empresa
+      if (userRoles.includes(RoleType.SUPER_ADMIN) || userRoles.includes(RoleType.PLACE_ADMIN)) {
+        unavailable.push(user)
+        console.debug(`-> Unavailable (high-level admin)`)
+        return
+      }
+
+      // Usuários que já são admins de empresa
+      if (userRoles.includes(RoleType.COMPANY_ADMIN)) {
+        admins.push(user)
+        console.debug(`-> Already admin`)
+        return
+      }
+
+      // Usuários disponíveis (PUBLIC_USER ou sem roles)
+      available.push(user)
+      console.debug(`-> Available`)
+    })
+
+    console.debug('Categorization results:', {
+      available: available.length,
+      admins: admins.length,
+      unavailable: unavailable.length,
+    })
+    console.debug('=== CATEGORIZE USERS DEBUG END ===')
+
+    return { available, admins, unavailable }
   }
 }

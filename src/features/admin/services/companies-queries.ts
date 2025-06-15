@@ -49,7 +49,7 @@ const COMPANY_SEGMENTATION_FRAGMENT = gql`
 `
 
 // Fragment comum para dados básicos da empresa
-const COMPANY_BASE_FRAGMENT = gql`
+export const COMPANY_BASE_FRAGMENT = gql`
   fragment CompanyBase on Company {
     id
     uuid
@@ -59,28 +59,23 @@ const COMPANY_BASE_FRAGMENT = gql`
     phone
     email
     website
-    address
-    latitude
-    longitude
-    openingHours
     logo
     banner
-    cnpj
+    isActive
+    isVerified
+    createdAt
+    updatedAt
     placeId
     place {
       id
       name
-      city
-      state
+      slug
     }
-    isActive
-    createdAt
-    updatedAt
   }
 `
 
 // Fragment para usuários completos
-const COMPANY_USERS_FRAGMENT = gql`
+export const COMPANY_USERS_FRAGMENT = gql`
   fragment CompanyUsers on Company {
     users {
       id
@@ -92,8 +87,13 @@ const COMPANY_USERS_FRAGMENT = gql`
       isActive
       isVerified
       companyId
+      company {
+        id
+        name
+      }
       userRoles {
         id
+        isActive
         role {
           id
           name
@@ -191,7 +191,6 @@ export const GET_COMPANIES_BY_PLACE_QUERY = gql`
   }
 `
 
-// Query específica para obter empresa com detalhes completos dos usuários
 export const GET_COMPANY_WITH_USERS_QUERY = gql`
   ${COMPANY_BASE_FRAGMENT}
   ${COMPANY_SEGMENTATION_FRAGMENT}
@@ -377,6 +376,59 @@ export const GET_COMPANIES_BY_SUBCATEGORY_QUERY = gql`
       ...CompanyBase
       ...CompanySegmentation
       ...CompanyUsers
+    }
+  }
+`
+
+// Mutations de administração (APENAS ADMINS AGORA)
+export const ASSIGN_COMPANY_ADMIN_MUTATION = gql`
+  ${COMPANY_BASE_FRAGMENT}
+  ${COMPANY_USERS_FRAGMENT}
+  mutation AssignCompanyAdmin($companyId: Int!, $userId: Int!) {
+    assignCompanyAdmin(companyId: $companyId, userId: $userId) {
+      ...CompanyBase
+      ...CompanyUsers
+    }
+  }
+`
+
+export const REMOVE_COMPANY_ADMIN_MUTATION = gql`
+  ${COMPANY_BASE_FRAGMENT}
+  ${COMPANY_USERS_FRAGMENT}
+  mutation RemoveCompanyAdmin($companyId: Int!, $userId: Int!) {
+    removeCompanyAdmin(companyId: $companyId, userId: $userId) {
+      ...CompanyBase
+      ...CompanyUsers
+    }
+  }
+`
+
+// Query para buscar usuários disponíveis para serem admins
+export const GET_AVAILABLE_COMPANY_ADMINS_QUERY = gql`
+  query GetAvailableCompanyAdmins($placeId: Int!) {
+    availableCompanyAdmins(placeId: $placeId) {
+      id
+      uuid
+      name
+      email
+      phone
+      avatar
+      isActive
+      isVerified
+      companyId
+      company {
+        id
+        name
+      }
+      userRoles {
+        id
+        isActive
+        role {
+          id
+          name
+          description
+        }
+      }
     }
   }
 `
