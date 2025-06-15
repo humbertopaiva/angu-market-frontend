@@ -4,7 +4,6 @@ import {
   ASSIGN_COMPANY_TO_CATEGORY_MUTATION,
   ASSIGN_COMPANY_TO_SEGMENT_MUTATION,
   ASSIGN_COMPANY_TO_SUBCATEGORY_MUTATION,
-  CREATE_COMPANY_MUTATION,
   CREATE_COMPANY_WITH_USERS_MUTATION,
   DELETE_COMPANY_MUTATION,
   GET_COMPANIES_BY_PLACE_QUERY,
@@ -303,26 +302,28 @@ export class CompaniesService {
     return result
   }
 
-  // ===== MÉTODOS EXISTENTES DE EMPRESA =====
-
   /**
-   * Criar empresa básica (sem usuários)
+   * Criar empresa
    */
   async createCompany(input: CreateCompanyInput): Promise<Company> {
     try {
-      const cleanInput = this.cleanCompanyInput(input)
-
-      console.log('Creating basic company with cleaned input:', cleanInput)
+      console.log('=== COMPANIES SERVICE CREATE DEBUG START ===')
+      console.log('Create input:', input)
 
       const { data } = await apolloClient.mutate({
-        mutation: CREATE_COMPANY_MUTATION,
-        variables: { createCompanyInput: cleanInput },
-        refetchQueries: [{ query: GET_COMPANIES_QUERY }],
+        mutation: CREATE_COMPANY_WITH_USERS_MUTATION,
+        variables: { createCompanyInput: input },
+        refetchQueries: [
+          { query: GET_COMPANIES_QUERY },
+        ],
+        errorPolicy: 'all',
       })
 
-      return data.createCompany as Company
+      console.log('Company created successfully:', data.createCompanyWithUsers)
+      return data.createCompanyWithUsers
     } catch (error) {
-      console.error('Create company error:', error)
+      console.error('=== COMPANIES SERVICE CREATE ERROR ===')
+      console.error('Error details:', error)
       throw error
     }
   }
@@ -350,61 +351,105 @@ export class CompaniesService {
   }
 
   /**
-   * Atualizar empresa existente
+   * Atualizar empresa
    */
   async updateCompany(input: UpdateCompanyInput): Promise<Company> {
     try {
-      const cleanInput = this.cleanUpdateCompanyInput(input)
-
-      console.log('Updating company with cleaned input:', cleanInput)
+      console.log('=== COMPANIES SERVICE UPDATE DEBUG START ===')
+      console.log('Update input:', input)
 
       const { data } = await apolloClient.mutate({
         mutation: UPDATE_COMPANY_MUTATION,
-        variables: { updateCompanyInput: cleanInput },
-        refetchQueries: [{ query: GET_COMPANIES_QUERY }],
+        variables: { updateCompanyInput: input },
+        refetchQueries: [
+          { query: GET_COMPANIES_QUERY },
+        ],
+        errorPolicy: 'all',
       })
 
-      return data.updateCompany as Company
+      console.log('Company updated successfully:', data.updateCompany)
+      return data.updateCompany
     } catch (error) {
-      console.error('Update company error:', error)
+      console.error('=== COMPANIES SERVICE UPDATE ERROR ===')
+      console.error('Error details:', error)
       throw error
     }
   }
 
-  /**
+   /**
    * Deletar empresa
    */
-  async deleteCompany(id: number): Promise<void> {
+  async deleteCompany(id: number): Promise<boolean> {
     try {
-      await apolloClient.mutate({
+      console.log('=== COMPANIES SERVICE DELETE DEBUG START ===')
+      console.log('Delete ID:', id)
+
+      const { data } = await apolloClient.mutate({
         mutation: DELETE_COMPANY_MUTATION,
         variables: { id },
-        refetchQueries: [{ query: GET_COMPANIES_QUERY }],
+        refetchQueries: [
+          { query: GET_COMPANIES_QUERY },
+        ],
+        errorPolicy: 'all',
       })
+
+      console.log('Company deleted successfully')
+      return data.removeCompany
     } catch (error) {
-      console.error('Delete company error:', error)
+      console.error('=== COMPANIES SERVICE DELETE ERROR ===')
+      console.error('Error details:', error)
       throw error
     }
   }
 
   /**
-   * Buscar todas as empresas
-   */
-  async getCompanies(): Promise<Array<Company>> {
-    try {
-      const { data } = await apolloClient.query({
-        query: GET_COMPANIES_QUERY,
-        fetchPolicy: 'cache-first',
-      })
+ * Buscar todas as empresas (com cache refresh)
+ */
+async getCompanies(): Promise<Array<Company>> {
+  try {
+    console.log('=== GETTING COMPANIES DEBUG START ===');
+    
+    const { data } = await apolloClient.query({
+      query: GET_COMPANIES_QUERY,
+      fetchPolicy: 'network-only', // FORÇAR BUSCA NO SERVIDOR
+      errorPolicy: 'all'
+    });
 
-      console.log('Companies data received:', data)
+    console.log('Apollo response received:', {
+      hasData: !!data,
+      companiesCount: data?.companies?.length || 0,
+      companies: data?.companies?.map((c: any) => ({
+        id: c.id,
+        name: c.name,
+        place: c.place?.name,
+        segment: c.segment?.name,
+        category: c.category?.name
+      })) || []
+    });
 
-      return data.companies as Array<Company>
-    } catch (error) {
-      console.error('Get companies error:', error)
-      throw error
+    console.log('=== GETTING COMPANIES DEBUG END ===');
+    return data.companies as Array<Company>;
+  } catch (error: any) {
+    console.error('=== COMPANIES SERVICE ERROR ===');
+    console.error('Error details:', {
+      message: error.message,
+      graphQLErrors: error.graphQLErrors,
+      networkError: error.networkError,
+      stack: error.stack
+    });
+    
+    // Se for erro de autenticação, lançar erro específico
+    if (error.graphQLErrors?.some((e: any) => e.extensions?.code === 'UNAUTHENTICATED')) {
+      throw new Error('Usuário não autenticado. Faça login novamente.');
     }
+    
+    if (error.graphQLErrors?.some((e: any) => e.extensions?.code === 'FORBIDDEN')) {
+      throw new Error('Você não tem permissão para acessar empresas.');
+    }
+    
+    throw error;
   }
+}
 
   /**
    * Buscar empresa por ID
@@ -427,17 +472,25 @@ export class CompaniesService {
   /**
    * Buscar empresas por place
    */
-  async getCompaniesByPlace(placeId: number): Promise<Array<Company>> {
+  async getCompaniesByPlace(placeId: number): Promise<Company[]> {
     try {
+      console.log('=== COMPANIES SERVICE GET BY PLACE DEBUG START ===')
+      console.log('Place ID:', placeId)
+
       const { data } = await apolloClient.query({
         query: GET_COMPANIES_BY_PLACE_QUERY,
         variables: { placeId },
-        fetchPolicy: 'cache-first',
+        fetchPolicy: 'network-only',
+        errorPolicy: 'all',
       })
 
-      return data.companiesByPlace as Array<Company>
+      console.log('GraphQL response for place:', data)
+      console.log(`Service returning ${data.companiesByPlace?.length || 0} companies for place ${placeId}`)
+
+      return data.companiesByPlace || []
     } catch (error) {
-      console.error('Get companies by place error:', error)
+      console.error('=== COMPANIES SERVICE GET BY PLACE ERROR ===')
+      console.error('Error details:', error)
       throw error
     }
   }
@@ -606,42 +659,22 @@ export class CompaniesService {
     return cleanInput
   }
 
-  /**
-   * Validar dados de entrada para criação de empresa
+   /**
+   * Validar dados de entrada
    */
-  validateCreateCompanyInput(input: CreateCompanyInput): Array<string> {
-    const errors: Array<string> = []
+  validateCreateCompanyInput(input: CreateCompanyInput): string[] {
+    const errors: string[] = []
 
-    if (!input.name || input.name.trim().length < 2) {
-      errors.push('Nome deve ter pelo menos 2 caracteres')
+    if (!input.name || input.name.trim().length === 0) {
+      errors.push('Nome da empresa é obrigatório')
     }
 
-    if (!input.slug || !/^[a-z0-9-]+$/.test(input.slug)) {
-      errors.push('Slug deve conter apenas letras minúsculas, números e hífens')
-    }
-
-    if (!input.description || input.description.trim().length < 1) {
-      errors.push('Descrição é obrigatória')
-    }
-
-    if (!input.placeId || input.placeId < 1) {
+    if (!input.placeId) {
       errors.push('Place é obrigatório')
     }
 
     if (input.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(input.email)) {
       errors.push('Email deve ser válido')
-    }
-
-    if (input.website && !/^https?:\/\/.+/.test(input.website)) {
-      errors.push('Website deve ser uma URL válida')
-    }
-
-    if (input.logo && !/^https?:\/\/.+/.test(input.logo)) {
-      errors.push('Logo deve ser uma URL válida')
-    }
-
-    if (input.banner && !/^https?:\/\/.+/.test(input.banner)) {
-      errors.push('Banner deve ser uma URL válida')
     }
 
     return errors

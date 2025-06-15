@@ -1,3 +1,5 @@
+// src/core/lib/apollo.ts
+
 import {
   ApolloClient,
   InMemoryCache,
@@ -13,17 +15,22 @@ const API_URL = isDevelopment
   ? import.meta.env.VITE_API_URL || 'http://localhost:4000/graphql'
   : 'https://cb-back.limei.app/graphql'
 
+console.log('Apollo Client - API URL:', API_URL)
+console.log('Apollo Client - Environment:', isDevelopment ? 'development' : 'production')
+
 const httpLink = createHttpLink({
   uri: API_URL,
 })
 
 // Link para tratamento de erros
-const errorLink = onError(({ graphQLErrors, networkError }) => {
-  if (graphQLErrors)
+const errorLink = onError(({ graphQLErrors, networkError, operation, forward }) => {
+  if (graphQLErrors) {
     graphQLErrors.forEach(({ message, locations, path }) => {
       console.error(
         `[GraphQL error]: Message: ${message}, Location: ${locations}, Path: ${path}`,
       )
+      console.error('Operation:', operation.operationName)
+      console.error('Variables:', operation.variables)
 
       if (message === 'Unauthorized' || message.includes('UNAUTHENTICATED')) {
         console.error('Token de autenticação inválido ou ausente!')
@@ -33,7 +40,14 @@ const errorLink = onError(({ graphQLErrors, networkError }) => {
         }
       }
     })
-  if (networkError) console.error(`[Network error]: ${networkError}`)
+  }
+  
+  if (networkError) {
+    console.error(`[Network error]: ${networkError}`)
+    console.error('Network error details:', networkError)
+    
+  
+  }
 })
 
 // Link para adicionar o token de autenticação nos cabeçalhos
@@ -41,22 +55,40 @@ const authLink = setContext((_, { headers }) => {
   // Pegar o token de autenticação do localStorage
   const token = localStorage.getItem('auth_token')
 
+  console.log('Auth link - Token exists:', !!token)
+  console.log('Auth link - Token preview:', token ? `${token.substring(0, 20)}...` : 'none')
+
   // Retornar os headers com o token se ele existir
   return {
     headers: {
       ...headers,
       authorization: token ? `Bearer ${token}` : '',
+      'Content-Type': 'application/json',
     },
   }
 })
 
-// Opções de cache otimizadas para produção
+// Cache otimizado
 const cache = new InMemoryCache({
   typePolicies: {
     Query: {
       fields: {
+        // CORREÇÃO: Cache para empresas
+        companies: {
+          merge(existing = [], incoming) {
+            console.log('Cache merge - companies:', { existing: existing.length, incoming: incoming.length })
+            return incoming // Sempre usar os dados mais recentes
+          },
+        },
+        companiesByPlace: {
+          keyArgs: ['placeId'],
+          merge(existing = [], incoming) {
+            console.log('Cache merge - companiesByPlace:', { existing: existing.length, incoming: incoming.length })
+            return incoming
+          },
+        },
+        // Cache para outras consultas
         movies: {
-          // Mesclar paginação em vez de substituir
           keyArgs: ['filters'],
           merge(
             existing = { edges: [], pageInfo: {}, totalCount: 0 },
@@ -64,7 +96,6 @@ const cache = new InMemoryCache({
           ) {
             if (!existing) return incoming
 
-            // Para recarregar completamente quando os filtros mudam
             if (incoming.pageInfo.startCursor === incoming.pageInfo.endCursor) {
               return incoming
             }
@@ -86,12 +117,18 @@ export const apolloClient = new ApolloClient({
   cache,
   defaultOptions: {
     watchQuery: {
-      fetchPolicy: import.meta.env.DEV ? 'network-only' : 'cache-and-network',
+      fetchPolicy: 'cache-and-network', // Usar cache mas também buscar no servidor
       errorPolicy: 'all',
     },
     query: {
-      fetchPolicy: import.meta.env.DEV ? 'network-only' : 'cache-first',
+      fetchPolicy: 'cache-first', // Preferir cache para consultas simples
+      errorPolicy: 'all',
+    },
+    mutate: {
+      fetchPolicy: 'no-cache', // Mutations sempre no servidor
       errorPolicy: 'all',
     },
   },
 })
+
+console.log('Apollo Client initialized successfully')

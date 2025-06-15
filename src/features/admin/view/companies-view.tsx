@@ -455,8 +455,7 @@ export function CompaniesView() {
       {selectedCompanyForManagement && (
         <CompanyAdminManager
           company={selectedCompanyForManagement}
-          placeId={Number(selectedCompanyForManagement.placeId)}
-          onCompanyUpdate={handleCompanyUpdate}
+        
         />
       )}
     </div>
